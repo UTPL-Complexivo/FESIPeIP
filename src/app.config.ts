@@ -22,10 +22,11 @@ export const appConfig: ApplicationConfig = {
             authorizationParams: {
                 redirect_uri: `${window.location.origin}/callback`,
                 audience: environment.auth.audience,
-                scope: 'openid profile email'
+                scope: 'openid profile email offline_access'
             },
             cacheLocation: 'localstorage',
             useRefreshTokens: true,
+            skipRedirectCallback: true,
             httpInterceptor: {
                 allowedList: [
                     // todas las rutas de tu API que requieren token

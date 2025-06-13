@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CardModule } from 'primeng/card';
 import { SkeletonModule } from 'primeng/skeleton';
 import { UsuarioService } from '../../service/usuario.service';
-import { UsuarioModel } from '../../models/usuario.component';
+import { UsuarioModel } from '../../models/usuario.model';
 import { AuthService, LogoutOptions } from '@auth0/auth0-angular';
 import { ButtonModule } from 'primeng/button';
 
@@ -46,7 +46,6 @@ export class AppUser implements OnInit {
     ngOnInit(): void {
         this.usuarioService.getMe().subscribe({
             next: (data) => {
-                console.log('User data fetched:', data);
                 this.usuario = data;
                 this.loading = false;
             },
