@@ -35,4 +35,12 @@ export class UsuarioService {
     patchEstado(id: string): Observable<RespuestaModel> {
         return this.http.patch<RespuestaModel>(`${this.apiUrl}/${id}/inactivate`, {});
     }
+
+    patchResetPassword(id: string): Observable<RespuestaModel> {
+        return this.http.patch<RespuestaModel>(`${this.apiUrl}/${id}/reset-password`, {});
+    }
+
+    deleteUsuario(id: string): Observable<RespuestaModel> {
+        return this.http.delete<RespuestaModel>(`${this.apiUrl}/${id}`);
+    }
 }

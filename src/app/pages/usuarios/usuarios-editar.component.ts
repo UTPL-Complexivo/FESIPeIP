@@ -14,12 +14,13 @@ import { InputTextModule } from 'primeng/inputtext';
 import { UsuarioService } from '../../service/usuario.service';
 import { UsuarioModel } from '../../models/usuario.model';
 import { RolService } from '../../service/rol.service';
+import { ToolbarModule } from 'primeng/toolbar';
 @Component({
     selector: 'app-usuarios-editar',
     standalone: true,
     template: `
         <div class="card">
-            <div class="font-semibold text-xl">Usuarios</div>
+            <div class="font-semibold text-xl">Editar Usuario {{ id }}</div>
             <p-breadcrumb class="max-w-full" [model]="items">
                 <ng-template #item let-item>
                     <ng-container *ngIf="item.route; else elseBlock">
@@ -36,10 +37,12 @@ import { RolService } from '../../service/rol.service';
                 </ng-template>
             </p-breadcrumb>
             <form [formGroup]="usuarioForm" (ngSubmit)="onSubmit()" class="p-fluid mt-4">
-                <div class="flex gap-2 mb-6">
-                    <button pButton type="button" icon="pi pi-arrow-left" label="Regresar" class="p-button-secondary" [routerLink]="['/usuarios']"></button>
-                    <button pButton type="submit" icon="pi pi-save" label="Actualizar"></button>
-                </div>
+                <p-toolbar>
+                    <ng-template #start>
+                        <button pButton type="button" icon="pi pi-arrow-left" label="Regresar" class="p-button-secondary mr-2" [routerLink]="['/usuarios']" [disabled]="grabando"></button>
+                        <button pButton type="submit" icon="pi pi-save" label="Actualizar" [disabled]="grabando"></button>
+                    </ng-template>
+                </p-toolbar>
                 <div class="p-field mt-8 mb-6">
                     <p-floatLabel>
                         <input id="id" type="text" pInputText formControlName="id" class="w-2/5" />
@@ -161,12 +164,14 @@ import { RolService } from '../../service/rol.service';
         </div>
         <p-toast position="top-right"></p-toast>
     `,
-    imports: [BreadcrumbModule, RouterModule, CommonModule, ReactiveFormsModule, ButtonModule, FloatLabelModule, MessageModule, SelectModule, ToastModule, InputTextModule],
+    imports: [BreadcrumbModule, RouterModule, CommonModule, ReactiveFormsModule, ButtonModule, FloatLabelModule, MessageModule, SelectModule, ToastModule, InputTextModule, ToolbarModule],
     providers: [MessageService]
 })
 export class UsuariosEditarComponent implements OnInit {
+    id: string = '';
     usuarioForm!: FormGroup;
     items: MenuItem[] | undefined;
+    grabando: boolean = false;
     tipoUsuarios = [
         { label: 'Interno', value: 'Interno' },
         { label: 'Externo', value: 'Externo' }
@@ -191,8 +196,9 @@ export class UsuariosEditarComponent implements OnInit {
                     next: (usuario) => {
                         this.rolService.getRoles().subscribe({
                             next: (data) => {
-                                this.roles = data;
+                                this.roles = data.filter(role => role.estado === 'Activo');
                                 this.usuario = usuario;
+                                this.id = usuario.id;
                                 this.usuarioForm.patchValue(usuario);
                                 this.usuarioForm.get('roles')!.setValue(usuario.roles[0]);
                                 this.actualizarNombre();
@@ -240,6 +246,7 @@ export class UsuariosEditarComponent implements OnInit {
             console.log('Form submitted:', this.usuarioForm.value);
             return;
         }
+        this.grabando = true;
         const rolesSeleccionados = this.usuarioForm.get('roles')!.value;
         if (typeof rolesSeleccionados === 'string') {
             this.usuarioForm.get('roles')!.setValue([rolesSeleccionados]);
@@ -248,18 +255,25 @@ export class UsuariosEditarComponent implements OnInit {
             ...this.usuario,
             ...this.usuarioForm.value
         };
+
+        this.usuario.eliminado = false;
+
         this.usuarioService.putUsuario(this.usuario.id, this.usuario).subscribe({
             next: (response) => {
                 const { error, mensaje } = response;
                 if (error) {
                     this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
-                } else {
-                    this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
+                    return;
                 }
+                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
             },
             error: (error) => {
                 console.error('Error updating usuario:', error);
                 this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el usuario' });
+                this.grabando = false;
+            },
+            complete: () => {
+                this.grabando = false;
             }
         });
         console.log('Form submitted:', this.usuarioForm.value);

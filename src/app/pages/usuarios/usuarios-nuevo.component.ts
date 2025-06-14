@@ -13,13 +13,14 @@ import { RolModel } from '../../models/rol.model';
 import { RolService } from '../../service/rol.service';
 import { ToastModule } from 'primeng/toast';
 import { UsuarioService } from '../../service/usuario.service';
+import { ToolbarModule } from 'primeng/toolbar';
 
 @Component({
     selector: 'app-usuarios-nuevo',
     standalone: true,
     template: `
         <div class="card">
-            <div class="font-semibold text-xl">Usuarios</div>
+            <div class="font-semibold text-xl">Nuevo Usuario</div>
             <p-breadcrumb class="max-w-full" [model]="items">
                 <ng-template #item let-item>
                     <ng-container *ngIf="item.route; else elseBlock">
@@ -36,11 +37,13 @@ import { UsuarioService } from '../../service/usuario.service';
                 </ng-template>
             </p-breadcrumb>
             <form [formGroup]="usuarioForm" (ngSubmit)="onSubmit()" class="p-fluid mt-4">
-                <div class="flex gap-2 mb-6">
-                    <button pButton type="button" icon="pi pi-arrow-left" label="Regresar" class="p-button-secondary" [routerLink]="['/usuarios']"></button>
-                    <button pButton type="submit" icon="pi pi-save" label="Guardar"></button>
-                    <p-button type="button" icon="pi pi-refresh" label="Resetear" severity="warn" variant="outlined" (click)="initializeUserForm()"></p-button>
-                </div>
+                <p-toolbar>
+                    <ng-template #start>
+                        <button pButton type="button" icon="pi pi-arrow-left" label="Regresar" class="p-button-secondary mr-2" [routerLink]="['/usuarios']"></button>
+                        <button pButton type="submit" icon="pi pi-save" label="Guardar" class="mr-2" [disabled]="grabando"></button>
+                        <p-button type="button" icon="pi pi-refresh" label="Resetear" severity="warn" variant="outlined" (click)="initializeUserForm()" [disabled]="grabando"></p-button>
+                    </ng-template>
+                </p-toolbar>
                 <div class="flex gap-2 mt-8 mb-6">
                     <div class="flex-1">
                         <p-floatLabel>
@@ -139,7 +142,7 @@ import { UsuarioService } from '../../service/usuario.service';
                         }
                     }
                 </div>
-                 <div class="p-field mb-6">
+                <div class="p-field mb-6">
                     <p-floatLabel>
                         <input id="telefono" type="text" pInputText formControlName="telefono" />
                         <label for="telefono">Teléfono</label>
@@ -165,7 +168,7 @@ import { UsuarioService } from '../../service/usuario.service';
         </div>
         <p-toast position="top-right"></p-toast>
     `,
-    imports: [BreadcrumbModule, FloatLabelModule, RouterModule, CommonModule, ReactiveFormsModule, InputTextModule, ButtonModule, MessageModule, SelectModule, ToastModule],
+    imports: [BreadcrumbModule, FloatLabelModule, RouterModule, CommonModule, ReactiveFormsModule, InputTextModule, ButtonModule, MessageModule, SelectModule, ToastModule, ToolbarModule],
     providers: [MessageService]
 })
 export class UsuariosNuevoComponent implements OnInit {
@@ -175,6 +178,7 @@ export class UsuariosNuevoComponent implements OnInit {
     nombreCompleto = '';
     primerNombre = '';
     segundoNombre = '';
+    grabando = false;
     tipoUsuarios = [
         { label: 'Interno', value: 'Interno' },
         { label: 'Externo', value: 'Externo' }
@@ -190,7 +194,7 @@ export class UsuariosNuevoComponent implements OnInit {
         this.items = [{ icon: 'pi pi-home', route: '/' }, { label: 'Gestión de Usuarios' }, { label: 'Usuarios' }, { label: 'Nuevo', route: '/usuarios/nuevo' }];
         this.rolService.getRoles().subscribe({
             next: (data) => {
-                this.roles = data;
+                this.roles = data.filter(role => role.estado === 'Activo');
             },
             error: (error) => {
                 console.error('Error fetching roles:', error);
@@ -231,6 +235,7 @@ export class UsuariosNuevoComponent implements OnInit {
             console.info('Usuario con errores:', this.usuarioForm);
             return;
         }
+        this.grabando = true;
 
         const rolesSeleccionados = this.usuarioForm.get('roles')!.value;
         if (typeof rolesSeleccionados === 'string') {
@@ -240,7 +245,7 @@ export class UsuariosNuevoComponent implements OnInit {
         this.usuarioService.addUsuario(this.usuarioForm.value).subscribe({
             next: (response) => {
                 const { error, mensaje } = response;
-                if(error) {
+                if (error) {
                     this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
                     return;
                 }
@@ -250,6 +255,10 @@ export class UsuariosNuevoComponent implements OnInit {
             },
             error: (error) => {
                 console.error('Error al crear el usuario:', error);
+                this.grabando = false;
+            },
+            complete: () => {
+                this.grabando = false;
             }
         });
     }

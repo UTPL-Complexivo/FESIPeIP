@@ -18,6 +18,9 @@ export const appRoutes: Routes = [
             { path: 'usuarios', loadComponent: () => import('./app/pages/usuarios/usuarios.component').then(u => u.UsuariosComponent) },
             { path: 'usuarios/nuevo', loadComponent: () => import('./app/pages/usuarios/usuarios-nuevo.component').then(u => u.UsuariosNuevoComponent) },
             { path: 'usuarios/:id', loadComponent: () => import('./app/pages/usuarios/usuarios-editar.component').then(u => u.UsuariosEditarComponent) },
+            { path: 'roles', loadComponent: () => import('./app/pages/roles/rol.component').then(r => r.RolComponent) },
+            { path: 'roles/nuevo', loadComponent: () => import('./app/pages/roles/rol-nuevo.component').then(r => r.RolNuevoComponent) },
+            { path: 'roles/:id', loadComponent: () => import('./app/pages/roles/rol-editar.component').then(r => r.RolEditarComponent) },
         ]
     },
     { path: 'landing', component: Landing },
