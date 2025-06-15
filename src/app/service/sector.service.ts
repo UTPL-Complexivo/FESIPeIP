@@ -15,6 +15,10 @@ export class SectorService {
         return this.http.get<SectorModel[]>(this.apiUrl);
     }
 
+    getSectoresByMacroSectorId(id: number): Observable<SectorModel[]> {
+        return this.http.get<SectorModel[]>(`${this.apiUrl}/${id}/macrosector`);
+    }
+
     getSectorById(id: number): Observable<SectorModel> {
         return this.http.get<SectorModel>(`${this.apiUrl}/${id}`);
     }

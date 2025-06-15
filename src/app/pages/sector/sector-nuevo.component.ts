@@ -16,7 +16,7 @@ import { SectorService } from '../../service/sector.service';
 @Component({
     selector: 'app-sector-nuevo',
     standalone: true,
-    template: ` <div class="card">
+    template: `<div class="card">
         <app-detalle-principal [titulo]="'Nuevo Sector'" [items]="items"></app-detalle-principal>
         <form [formGroup]="sectorForm" (ngSubmit)="onSubmit()">
             <app-toolbar-crud [linkRegreso]="'/configuracion-institucional/sectores'" [grabando]="grabando" [initializeUserForm]="initializeUserForm"></app-toolbar-crud>

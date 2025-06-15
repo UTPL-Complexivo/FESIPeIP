@@ -86,7 +86,6 @@ export class AppMenu {
             error: (error) => {
                 console.error('Error al obtener el usuario:', error);
                 this.model = [];
-                this.loading = false;
             },
             complete: () => {
                 this.loading = false;

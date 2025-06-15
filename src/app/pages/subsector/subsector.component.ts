@@ -2,34 +2,32 @@ import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { AppCabeceraPrincipal } from '../../layout/component/app.cabecera-principal';
 import { MenuItem, MessageService } from 'primeng/api';
 import { Table, TableModule } from 'primeng/table';
-import { SectorModel } from '../../models/sector.model';
-import { AppDialogConfirmation } from '../../layout/component/app.dialog-confirmation';
+import { SubSectorModel } from '../../models/sub-sector.model';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { RouterModule } from '@angular/router';
-import { BadgeModule } from 'primeng/badge';
+import { AppEstadoGeneral } from '../../layout/component/app.estado-general';
 import { ToastModule } from 'primeng/toast';
+import { AppDialogConfirmation } from '../../layout/component/app.dialog-confirmation';
+import { SubSectorService } from '../../service/sub-sector.service';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
-import { SelectControlValueAccessor } from '@angular/forms';
-import { SectorService } from '../../service/sector.service';
-import { AppEstadoGeneral } from '../../layout/component/app.estado-general';
 
 @Component({
-    selector: 'app-sector',
+    selector: 'app-subsector',
     standalone: true,
     template: `<div class="card">
-            <app-cabecera-principal [items]="items" titulo="Sectores" linkNuevo="/configuracion-institucional/sectores/nuevo"></app-cabecera-principal>
+            <app-cabecera-principal [items]="items" titulo="Sub Sectores" linkNuevo="/configuracion-institucional/sub-sectores/nuevo"></app-cabecera-principal>
             <p-table
                 #dt1
-                [value]="sectores"
+                [value]="sub_sectores"
                 [tableStyle]="{ 'min-width': '50rem' }"
                 [loading]="loading"
                 [paginator]="true"
                 [rows]="5"
-                [rowsPerPageOptions]="[5, 10, 20]"
+                [rowsPerPageOptions]="[5, 10, 20, 50, 100]"
                 [responsiveLayout]="'scroll'"
-                [globalFilterFields]="['nombre', 'codigo', 'nombreMacroSector', 'estado']"
+                [globalFilterFields]="['nombre', 'codigo', 'nombreMacroSector', 'nombreSector', 'estado']"
             >
                 <ng-template #caption>
                     <div class="flex justify-between items-center flex-column sm:flex-row">
@@ -72,6 +70,15 @@ import { AppEstadoGeneral } from '../../layout/component/app.estado-general';
                                 </div>
                             </div>
                         </th>
+                        <th pSortableColumn="nombreSector">
+                            <div class="flex justify-between items-center w-full">
+                                <span>Sector</span>
+                                <div class="flex items-center gap-2">
+                                    <p-columnFilter type="text" field="nombreSector" display="menu" placeholder="Buscar por Macro Sector"></p-columnFilter>
+                                    <p-sortIcon field="nombreSector"></p-sortIcon>
+                                </div>
+                            </div>
+                        </th>
                         <th pSortableColumn="estado">
                             <div class="flex justify-between items-center w-full">
                                 <span>Estado</span>
@@ -83,22 +90,23 @@ import { AppEstadoGeneral } from '../../layout/component/app.estado-general';
                         </th>
                     </tr>
                 </ng-template>
-                <ng-template #body let-sector>
+                <ng-template #body let-sub_sector>
                     <tr>
                         <td>
-                            <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text" [routerLink]="['/configuracion-institucional/sectores/editar', sector.id]" pTooltip="Editar" tooltipPosition="top"></button>
-                            @if (sector.estado === 'Activo') {
-                                <button pButton icon="pi pi-lock" class="p-button-rounded p-button-text" (click)="updateEstado(sector.id)" pTooltip="Inactivar" tooltipPosition="top"></button>
+                            <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text" [routerLink]="['/configuracion-institucional/sub-sectores/editar', sub_sector.id]" pTooltip="Editar" tooltipPosition="top"></button>
+                            @if (sub_sector.estado === 'Activo') {
+                                <button pButton icon="pi pi-lock" class="p-button-rounded p-button-text" (click)="updateEstado(sub_sector.id)" pTooltip="Inactivar" tooltipPosition="top"></button>
                             } @else {
-                                <button pButton icon="pi pi-unlock" severity="warn" class="p-button-rounded p-button-text" (click)="updateEstado(sector.id)" pTooltip="Activar" tooltipPosition="top"></button>
+                                <button pButton icon="pi pi-unlock" severity="warn" class="p-button-rounded p-button-text" (click)="updateEstado(sub_sector.id)" pTooltip="Activar" tooltipPosition="top"></button>
                             }
-                            <button pButton icon="pi pi-trash" severity="danger" class="p-button-rounded p-button-text" (click)="deleteUsuario(sector.id)" pTooltip="Eliminar" tooltipPosition="top"></button>
+                            <button pButton icon="pi pi-trash" severity="danger" class="p-button-rounded p-button-text" (click)="deleteUsuario(sub_sector.id)" pTooltip="Eliminar" tooltipPosition="top"></button>
                         </td>
-                        <td>{{ sector.codigo }}</td>
-                        <td>{{ sector.nombre }}</td>
-                        <td>{{ sector.nombreMacroSector }}</td>
+                        <td>{{ sub_sector.codigo }}</td>
+                        <td>{{ sub_sector.nombre }}</td>
+                        <td>{{ sub_sector.nombreMacroSector }}</td>
+                        <td>{{ sub_sector.nombreSector }}</td>
                         <td>
-                            <app-estado-general [estado]="sector.estado"></app-estado-general>
+                            <app-estado-general [estado]="sub_sector.estado"></app-estado-general>
                         </td>
                     </tr>
                 </ng-template>
@@ -116,13 +124,13 @@ import { AppEstadoGeneral } from '../../layout/component/app.estado-general';
         </div>
         <p-toast position="top-right"></p-toast>
         <app-dialog-confirmation [displayMotivoDialog]="displayMotivoDialog" [inactivar]="inactivar" [tituloMotivo]="tituloMotivo" [id]="idAEliminar" (cerrarDialogo)="dialogo($event)" (save)="confirmarEliminacion($event)"></app-dialog-confirmation>`,
-    imports: [AppCabeceraPrincipal, TableModule, AppDialogConfirmation, IconFieldModule, InputIconModule, RouterModule, BadgeModule, ToastModule, InputTextModule, ButtonModule, AppEstadoGeneral],
+    imports: [AppCabeceraPrincipal, TableModule, IconFieldModule, InputIconModule, RouterModule, AppEstadoGeneral, ToastModule, AppDialogConfirmation, InputTextModule, ButtonModule],
     providers: [MessageService]
 })
-export class SectorComponent implements OnInit {
+export class SubsectorComponent implements OnInit {
     @ViewChild('filter') filter!: ElementRef;
     items: MenuItem[] = [];
-    sectores: SectorModel[] = [];
+    sub_sectores: SubSectorModel[] = [];
     loading: boolean = true;
     displayMotivoDialog: boolean = false;
     inactivar: boolean = false;
@@ -130,28 +138,30 @@ export class SectorComponent implements OnInit {
     idAEliminar: number | null = null;
 
     constructor(
-        private sectorService: SectorService,
+        private subSectorService: SubSectorService,
         private messageService: MessageService
-    ) {}
-    ngOnInit(): void {
-        this.items = [{ icon: 'pi pi-home', route: '/' }, { label: 'Configuracion Institucional' }, { label: 'Sectores', route: '/sectores' }];
-        this.getSectores();
+    ) {
+        console.log('SubsectorComponent initialized');
     }
 
-    getSectores() {
-        this.loading = true;
-        this.sectorService.getSectores().subscribe({
+    ngOnInit() {
+        this.items = [{ icon: 'pi pi-home', route: '/' }, { label: 'Configuracion Institucional' }, { label: 'Sub Sectores', route: '/sub-sectores' }];
+        this.loadSubSectores();
+    }
+
+    loadSubSectores() {
+        this.subSectorService.getSubsectores().subscribe({
             next: (data) => {
-                this.sectores = data;
+                this.sub_sectores = data;
+                this.loading = false;
             },
             error: (error) => {
-                console.error('Error al obtener los sectores:', error);
-            },
-            complete: () => {
+                console.error('Error loading sub-sectores:', error);
                 this.loading = false;
             }
         });
     }
+
     onGlobalFilter(table: Table, event: Event) {
         table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
     }
@@ -161,44 +171,35 @@ export class SectorComponent implements OnInit {
         this.filter.nativeElement.value = '';
     }
 
-    deleteUsuario(id: number) {
+    deleteUsuario(arg0: any) {
         this.displayMotivoDialog = true;
         this.inactivar = false;
-        this.tituloMotivo = 'Motivo de eliminación';
-        this.idAEliminar = id;
+        this.tituloMotivo = 'Motivo de Eliminación';
+        this.idAEliminar = arg0;
     }
     updateEstado(id: number) {
-        const sector = this.sectores.find((s) => s.id === id);
-        if (!sector) {
-            console.error('Sector no encontrado:', id);
-            return;
-        }
-        if (sector.estado === 'Activo') {
+        const subsector = this.sub_sectores.find((s) => s.id === id);
+        if (subsector?.estado === 'Activo') {
             this.displayMotivoDialog = true;
             this.inactivar = true;
-            this.tituloMotivo = 'Motivo de inactivación';
+            this.tituloMotivo = 'Motivo de Inactivación';
             this.idAEliminar = id;
             return;
         }
-        const dto = {
-            id: sector.id,
-            motivoInactivacion: 'activación del sector'
-        };
         this.loading = true;
-        this.sectorService.patchEstado(id, dto).subscribe({
+        this.subSectorService.patchSubSectorEstado(id, { id, motivoInactivacion: 'actualizado desde sistema' }).subscribe({
             next: (response) => {
                 const { error, mensaje } = response;
                 if (error) {
-                    console.error('Error al activar el sector:', mensaje);
                     this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
                     return;
                 }
                 this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
-                this.getSectores();
+                subsector!.estado = subsector!.estado === 'Activo' ? 'Inactivo' : 'Activo';
             },
             error: (error) => {
-                console.error('Error al activar el sector:', error);
-                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo activar el sector.' });
+                console.error('Error updating estado:', error);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el estado.' });
                 this.loading = false;
             },
             complete: () => {
@@ -206,55 +207,54 @@ export class SectorComponent implements OnInit {
             }
         });
     }
-
     confirmarEliminacion($event: any) {
-        console.log('Confirmar eliminación:', $event);
-        if (this.inactivar) {
-            this.sectorService.patchEstado(this.idAEliminar!, $event).subscribe({
+        const { inactivar } = $event;
+        this.loading = true;
+        if (inactivar) {
+            this.subSectorService.patchSubSectorEstado(this.idAEliminar!, $event).subscribe({
                 next: (response) => {
                     const { error, mensaje } = response;
                     if (error) {
-                        this.displayMotivoDialog = false;
-                        this.idAEliminar = null;
-                        this.inactivar = false;
-                        this.tituloMotivo = '';
                         this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
                         return;
                     }
-                    this.displayMotivoDialog = false;
-                    this.idAEliminar = null;
-                    this.inactivar = false;
-                    this.tituloMotivo = '';
                     this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
-                    this.getSectores();
+                    const subsector = this.sub_sectores.find((s) => s.id === this.idAEliminar);
+                    if (subsector) {
+                        subsector.estado = subsector.estado === 'Activo' ? 'Inactivo' : 'Activo';
+                    }
                 },
                 error: (error) => {
-                    console.error('Error al inactivar el sector:', error);
+                    console.error('Error updating estado:', error);
+                    this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el estado.' });
+                    this.loading = false;
+                },
+                complete: () => {
+                    this.displayMotivoDialog = false;
+                    this.loading = false;
                 }
             });
             return;
         }
 
-        this.sectorService.deleteSector(this.idAEliminar!, $event).subscribe({
+        this.subSectorService.deleteSubSector(this.idAEliminar!, $event).subscribe({
             next: (response) => {
                 const { error, mensaje } = response;
                 if (error) {
-                    this.displayMotivoDialog = false;
-                    this.idAEliminar = null;
-                    this.inactivar = false;
-                    this.tituloMotivo = '';
                     this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
                     return;
                 }
-                this.displayMotivoDialog = false;
-                this.idAEliminar = null;
-                this.inactivar = false;
-                this.tituloMotivo = '';
                 this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
-                this.getSectores();
+                this.sub_sectores = this.sub_sectores.filter((s) => s.id !== this.idAEliminar);
             },
             error: (error) => {
-                console.error('Error al eliminar el sector:', error);
+                console.error('Error deleting subsector:', error);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el subsector.' });
+                this.loading = false;
+            },
+            complete: () => {
+                this.displayMotivoDialog = false;
+                this.loading = false;
             }
         });
     }
