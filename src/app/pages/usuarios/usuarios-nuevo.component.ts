@@ -39,7 +39,7 @@ import { ToolbarModule } from 'primeng/toolbar';
             <form [formGroup]="usuarioForm" (ngSubmit)="onSubmit()" class="p-fluid mt-4">
                 <p-toolbar>
                     <ng-template #start>
-                        <button pButton type="button" icon="pi pi-arrow-left" label="Regresar" class="p-button-secondary mr-2" [routerLink]="['/usuarios']"></button>
+                        <button pButton type="button" icon="pi pi-arrow-left" label="Regresar" class="p-button-secondary mr-2" [routerLink]="['/gestion-usuarios/usuarios']"></button>
                         <button pButton type="submit" icon="pi pi-save" label="Guardar" class="mr-2" [disabled]="grabando"></button>
                         <p-button type="button" icon="pi pi-refresh" label="Resetear" severity="warn" variant="outlined" (click)="initializeUserForm()" [disabled]="grabando"></p-button>
                     </ng-template>

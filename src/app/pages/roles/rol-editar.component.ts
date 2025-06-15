@@ -36,7 +36,7 @@ import { RolModel } from '../../models/rol.model';
             <form [formGroup]="rolForm" (ngSubmit)="onSubmit()" class="p-fluid mt-4">
                 <p-toolbar>
                     <ng-template #start>
-                        <button pButton type="button" icon="pi pi-arrow-left" label="Regresar" class="p-button-secondary mr-2" [routerLink]="['/roles']"></button>
+                        <button pButton type="button" icon="pi pi-arrow-left" label="Regresar" class="p-button-secondary mr-2" [routerLink]="['/gestion-usuarios/roles']"></button>
                         <button pButton type="submit" icon="pi pi-save" label="Guardar" class="mr-2"></button>
                     </ng-template>
                 </p-toolbar>

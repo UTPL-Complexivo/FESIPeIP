@@ -41,7 +41,7 @@ import { BadgeModule } from 'primeng/badge';
             </p-breadcrumb>
             <p-toolbar>
                 <ng-template #start>
-                    <button pButton type="button" icon="pi pi-plus" label="Nuevo registro" class="p-button-success" [routerLink]="['/usuarios/nuevo']"></button>
+                    <button pButton type="button" icon="pi pi-plus" label="Nuevo registro" class="p-button-success" [routerLink]="['/gestion-usuarios/usuarios/nuevo']"></button>
                 </ng-template>
                 <ng-template #end>
                     <p-checkbox inputId="includeDeleted" [(ngModel)]="includeDeleted" binary="true" (onChange)="loadUsuariosData()"></p-checkbox>
@@ -135,10 +135,15 @@ import { BadgeModule } from 'primeng/badge';
                         <td>{{ usuario.nombre }}</td>
                         <td>{{ usuario.correo }}</td>
                         <td>{{ usuario.userName }}</td>
-                        <td>{{ usuario.estado }}</td>
+                        <td>
+                            @if(usuario.estado === 'Activo') {
+                                <p-badge value="Activo" severity="success" badgeSize="large" />
+                            } @else {
+                                <p-badge value="Inactivo" severity="danger" badgeSize="large" />
+                            }
                         <td>
                             @for (item of usuario.roles; track $index) {
-                                 <p-badge [value]="item" severity="info" />
+                                 <p-badge [value]="item" severity="info" badgeSize="large"/>
                             }
                         </td>
                     </tr>

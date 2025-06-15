@@ -14,6 +14,7 @@ import { RolService } from '../../service/rol.service';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { InputTextModule } from 'primeng/inputtext';
+import { BadgeModule } from 'primeng/badge';
 @Component({
     selector: 'app-rol',
     standalone: true,
@@ -36,10 +37,20 @@ import { InputTextModule } from 'primeng/inputtext';
             </p-breadcrumb>
             <p-toolbar>
                 <ng-template #start>
-                    <button pButton type="button" icon="pi pi-plus" label="Nuevo registro" class="p-button-success" [routerLink]="['/roles/nuevo']"></button>
+                    <button pButton type="button" icon="pi pi-plus" label="Nuevo registro" class="p-button-success" [routerLink]="['/gestion-usuarios/roles/nuevo']"></button>
                 </ng-template>
             </p-toolbar>
-            <p-table #dt1 [value]="roles" [tableStyle]="{ 'min-width': '50rem' }" [loading]="loading" [paginator]="true" [rows]="5" [rowsPerPageOptions]="[5, 10, 20]" [responsiveLayout]="'scroll'" [globalFilterFields]="['nombre', 'descripcion', 'estado']">
+            <p-table
+                #dt1
+                [value]="roles"
+                [tableStyle]="{ 'min-width': '50rem' }"
+                [loading]="loading"
+                [paginator]="true"
+                [rows]="5"
+                [rowsPerPageOptions]="[5, 10, 20]"
+                [responsiveLayout]="'scroll'"
+                [globalFilterFields]="['nombre', 'descripcion', 'estado']"
+            >
                 <ng-template #caption>
                     <div class="flex justify-between items-center flex-column sm:flex-row">
                         <button pButton label="Limpiar Filtro General" class="p-button-outlined mb-2" icon="pi pi-filter-slash" (click)="clear(dt1)"></button>
@@ -96,13 +107,19 @@ import { InputTextModule } from 'primeng/inputtext';
                         </td>
                         <td>{{ rol.nombre }}</td>
                         <td>{{ rol.descripcion }}</td>
-                        <td>{{ rol.estado }}</td>
+                        <td>
+                            @if (rol.estado === 'Activo') {
+                                <p-badge value="Activo" severity="success" badgeSize="large"></p-badge>
+                            } @else {
+                                <p-badge value="Inactivo" severity="danger" badgeSize="large"></p-badge>
+                            }
+                        </td>
                     </tr>
                 </ng-template>
             </p-table>
         </div>
         <p-toast position="top-right"></p-toast>`,
-    imports: [BreadcrumbModule, RouterModule, CommonModule, ToolbarModule, TableModule, IconFieldModule, InputIconModule, ToastModule, ButtonModule, TooltipModule, InputTextModule],
+    imports: [BreadcrumbModule, RouterModule, CommonModule, ToolbarModule, TableModule, IconFieldModule, InputIconModule, ToastModule, ButtonModule, TooltipModule, InputTextModule, BadgeModule],
     providers: [MessageService]
 })
 export class RolComponent implements OnInit {
@@ -161,7 +178,7 @@ export class RolComponent implements OnInit {
                     return;
                 }
                 this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
-                const rol = this.roles.find(r => r.id === id);
+                const rol = this.roles.find((r) => r.id === id);
                 if (rol) {
                     rol.estado = rol.estado === 'Activo' ? 'Inactivo' : 'Activo';
                 }
