@@ -104,7 +104,7 @@ export class SubsectorNuevoComponent implements OnInit {
         this.items = [{ icon: 'pi pi-home', route: '/' }, { label: 'Configuracion Institucional' }, { label: 'Sub Sectores' }, { label: 'Nuevo', route: '/sub-sectores/nuevo' }];
         this.macroSectorService.getMacroSectores().subscribe({
             next: (data) => {
-                this.macroSectores = data;
+                this.macroSectores = data.filter((macroSector) => macroSector.estado === 'Activo');
             },
             error: (error) => {
                 console.error('Error loading macro sectors:', error);
