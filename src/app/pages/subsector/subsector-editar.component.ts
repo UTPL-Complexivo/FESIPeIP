@@ -21,7 +21,7 @@ import { SubSectorModel } from '../../models/sub-sector.model';
     template: `<div class="card">
         <app-detalle-principal [titulo]="titulo" [items]="items"></app-detalle-principal>
         <form [formGroup]="subsectorForm" (ngSubmit)="onSubmit()">
-            <app-toolbar-crud [linkRegreso]="'/configuracion-institucional/sub-sectores'" [grabando]="grabando" [initializeUserForm]="initializeUserForm"></app-toolbar-crud>
+            <app-toolbar-crud [linkRegreso]="'/configuracion-institucional/sub-sectores'" [grabando]="grabando" [initializeUserForm]="initializeUserForm" [mostrarReset]="false"></app-toolbar-crud>
             <div class="p-fluid">
                 <div class="p-field mt-8 mb-6">
                     <p-floatLabel>

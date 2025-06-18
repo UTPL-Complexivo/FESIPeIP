@@ -68,7 +68,7 @@ import { ButtonModule } from 'primeng/button';
     imports: [TableModule, IconFieldModule, InputIconModule, AppEstadoGeneral, InputTextModule, ButtonModule],
     providers: []
 })
-export class SubsectorSelectComponent {
+export class SelectGridComponent {
     @ViewChild('filter') filter!: ElementRef;
     @Input({ required: true }) globalFilters: string[] = [];
     @Input({ required: true }) headers: HeaderTableModel[] = [];

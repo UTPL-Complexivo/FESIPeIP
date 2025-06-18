@@ -10,31 +10,31 @@ import { RespuestaModel } from '../models/respuesta.model';
 })
 export class SubSectorService {
     apiUrl: string = `${environment.apiUrl}/subsectores`;
-    constructor(private hhtp: HttpClient) {}
+    constructor(private http: HttpClient) {}
     getSubsectores(): Observable<SubSectorModel[]> {
-        return this.hhtp.get<SubSectorModel[]>(this.apiUrl);
+        return this.http.get<SubSectorModel[]>(this.apiUrl);
     }
 
     getSubsectoresById(id: number): Observable<SubSectorModel> {
-        return this.hhtp.get<SubSectorModel>(`${this.apiUrl}/${id}`);
+        return this.http.get<SubSectorModel>(`${this.apiUrl}/${id}`);
     }
 
     addSubSector(subSector: SubSectorModel): Observable<RespuestaModel> {
-        return this.hhtp.post<RespuestaModel>(this.apiUrl, subSector);
+        return this.http.post<RespuestaModel>(this.apiUrl, subSector);
     }
 
     updateSubSector(id: number, subSector: SubSectorModel): Observable<RespuestaModel> {
-        return this.hhtp.put<RespuestaModel>(`${this.apiUrl}/${id}`, subSector);
+        return this.http.put<RespuestaModel>(`${this.apiUrl}/${id}`, subSector);
     }
 
     patchSubSectorEstado(id: number, motivo: any): Observable<RespuestaModel> {
-        return this.hhtp.patch<RespuestaModel>(`${this.apiUrl}/${id}/inactivate`, motivo, {
+        return this.http.patch<RespuestaModel>(`${this.apiUrl}/${id}/inactivate`, motivo, {
             headers: { 'Content-Type': 'application/json' }
         });
     }
 
     deleteSubSector(id: number, motivo: any): Observable<RespuestaModel> {
-        return this.hhtp.delete<RespuestaModel>(`${this.apiUrl}/${id}`, {
+        return this.http.delete<RespuestaModel>(`${this.apiUrl}/${id}`, {
             headers: { 'Content-Type': 'application/json' },
             body: motivo
         });

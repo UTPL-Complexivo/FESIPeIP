@@ -12,5 +12,6 @@ export default [
     { path: 'sub-sectores/nuevo', loadComponent: () => import('./subsector/subsector-nuevo.component').then((s) => s.SubsectorNuevoComponent) },
     { path: 'instituciones', loadComponent: () => import('./institucion/institucion.component').then((i) => i.InstitucionComponent) },
     { path: 'instituciones/nuevo', loadComponent: () => import('./institucion/institucion-nuevo.component').then((i) => i.InstitucionNuevoComponent) },
+    { path: 'instituciones/editar/:id', loadComponent: () => import('./institucion/institucion-editar.component').then((i) => i.InstitucionEditarComponent) },
     { path: '**', redirectTo: '/notfound' }
 ] as Routes;

@@ -74,8 +74,17 @@ import { ButtonModule } from 'primeng/button';
                             <div class="flex justify-between items-center w-full">
                                 <span>Sector</span>
                                 <div class="flex items-center gap-2">
-                                    <p-columnFilter type="text" field="nombreSector" display="menu" placeholder="Buscar por Macro Sector"></p-columnFilter>
+                                    <p-columnFilter type="text" field="nombreSector" display="menu" placeholder="Buscar por Sector"></p-columnFilter>
                                     <p-sortIcon field="nombreSector"></p-sortIcon>
+                                </div>
+                            </div>
+                        </th>
+                        <th pSortableColumn="nombreSubsector">
+                            <div class="flex justify-between items-center w-full">
+                                <span>Sub Sector</span>
+                                <div class="flex items-center gap-2">
+                                    <p-columnFilter type="text" field="nombreSubsector" display="menu" placeholder="Buscar por Sub Sector"></p-columnFilter>
+                                    <p-sortIcon field="nombreSubsector"></p-sortIcon>
                                 </div>
                             </div>
                         </th>
@@ -90,23 +99,24 @@ import { ButtonModule } from 'primeng/button';
                         </th>
                     </tr>
                 </ng-template>
-                <ng-template #body let-sub_sector>
+                <ng-template #body let-institucion>
                     <tr>
                         <td>
-                            <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text" [routerLink]="['/configuracion-institucional/sub-sectores/editar', sub_sector.id]" pTooltip="Editar" tooltipPosition="top"></button>
-                            @if (sub_sector.estado === 'Activo') {
-                                <button pButton icon="pi pi-lock" class="p-button-rounded p-button-text" (click)="updateEstado(sub_sector.id)" pTooltip="Inactivar" tooltipPosition="top"></button>
+                            <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text" [routerLink]="['/configuracion-institucional/instituciones/editar', institucion.id]" pTooltip="Editar" tooltipPosition="top"></button>
+                            @if (institucion.estado === 'Activo') {
+                                <button pButton icon="pi pi-lock" class="p-button-rounded p-button-text" (click)="updateEstado(institucion.id)" pTooltip="Inactivar" tooltipPosition="top"></button>
                             } @else {
-                                <button pButton icon="pi pi-unlock" severity="warn" class="p-button-rounded p-button-text" (click)="updateEstado(sub_sector.id)" pTooltip="Activar" tooltipPosition="top"></button>
+                                <button pButton icon="pi pi-unlock" severity="warn" class="p-button-rounded p-button-text" (click)="updateEstado(institucion.id)" pTooltip="Activar" tooltipPosition="top"></button>
                             }
-                            <button pButton icon="pi pi-trash" severity="danger" class="p-button-rounded p-button-text" (click)="deleteUsuario(sub_sector.id)" pTooltip="Eliminar" tooltipPosition="top"></button>
+                            <button pButton icon="pi pi-trash" severity="danger" class="p-button-rounded p-button-text" (click)="deleteUsuario(institucion.id)" pTooltip="Eliminar" tooltipPosition="top"></button>
                         </td>
-                        <td>{{ sub_sector.codigo }}</td>
-                        <td>{{ sub_sector.nombre }}</td>
-                        <td>{{ sub_sector.nombreMacroSector }}</td>
-                        <td>{{ sub_sector.nombreSector }}</td>
+                        <td>{{ institucion.codigo }}</td>
+                        <td>{{ institucion.nombre }}</td>
+                        <td>{{ institucion.nombreMacroSector }}</td>
+                        <td>{{ institucion.nombreSector }}</td>
+                        <td>{{ institucion.nombreSubsector }}</td>
                         <td>
-                            <app-estado-general [estado]="sub_sector.estado"></app-estado-general>
+                            <app-estado-general [estado]="institucion.estado"></app-estado-general>
                         </td>
                     </tr>
                 </ng-template>
@@ -136,8 +146,10 @@ export class InstitucionComponent implements OnInit {
     inactivar: boolean = false;
     tituloMotivo: string = '';
     idAEliminar: number = 0;
-    constructor(private institucionService: InstitucionService) {
-    }
+    constructor(
+        private institucionService: InstitucionService,
+        private messageService: MessageService
+    ) {}
     ngOnInit(): void {
         this.items = [{ icon: 'pi pi-home', route: '/' }, { label: 'Configuracion Institucional' }, { label: 'Instituciones', route: '/instituciones' }];
         this.loadInstituciones();
@@ -164,17 +176,86 @@ export class InstitucionComponent implements OnInit {
         table.clear();
         this.filter.nativeElement.value = '';
     }
-    deleteUsuario(arg0: any) {
-        throw new Error('Method not implemented.');
+    deleteUsuario(id: number) {
+        this.idAEliminar = id;
+        this.inactivar = false;
+        this.tituloMotivo = 'Eliminar Institución';
+        this.displayMotivoDialog = true;
     }
-    updateEstado(arg0: any) {
-        throw new Error('Method not implemented.');
+    updateEstado(id: number) {
+        //verificar si la institución está activa o inactiva
+        const institucion = this.instituciones.find((i) => i.id === id);
+        if (institucion && institucion.estado === 'Activo') {
+            this.idAEliminar = id;
+            this.inactivar = true;
+            this.tituloMotivo = 'Inactivar Institución';
+            this.displayMotivoDialog = true;
+            return;
+        }
+        this.idAEliminar = id;
+        this.patchInstitutionState({ inactivar: this.inactivar, id: this.idAEliminar, motivoInactivacion: 'reactivacion desde sistema' });
     }
 
     confirmarEliminacion($event: any) {
-        throw new Error('Method not implemented.');
+        const { inactivar } = $event;
+        if (inactivar) {
+            this.patchInstitutionState($event);
+            return;
+        }
+        if (this.idAEliminar > 0) {
+            this.institucionService.deleteInstitucion(this.idAEliminar, $event).subscribe({
+                next: (response) => {
+                    const { error, mensaje } = response;
+                    if (error) {
+                        this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
+                        return;
+                    }
+                    this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
+                    this.instituciones = this.instituciones.filter((i) => i.id !== this.idAEliminar);
+                    this.limpiarCamposEditarEliminar();
+                },
+                error: (error) => {
+                    console.error('Error al eliminar la institución:', error);
+                    this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar la institución.' });
+                },
+                complete: () => {
+                    this.displayMotivoDialog = false;
+                }
+            });
+        }
     }
+    private patchInstitutionState($event: any) {
+        this.institucionService.patchEstadoInstitucion(this.idAEliminar, $event).subscribe({
+            next: (response) => {
+                const { error, mensaje } = response;
+                if (error) {
+                    this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
+                    return;
+                }
+                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
+                const institucion = this.instituciones.find((i) => i.id === this.idAEliminar);
+                if (institucion) {
+                    institucion.estado = institucion.estado === 'Activo' ? 'Inactivo' : 'Activo';
+                }
+                this.limpiarCamposEditarEliminar();
+            },
+            error: (error) => {
+                console.error('Error al actualizar el estado de la institución:', error);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el estado de la institución.' });
+            },
+            complete: () => {
+                this.displayMotivoDialog = false;
+            }
+        });
+    }
+
     dialogo($event: boolean) {
-        throw new Error('Method not implemented.');
+        this.displayMotivoDialog = $event;
+    }
+
+    limpiarCamposEditarEliminar() {
+        this.idAEliminar = 0;
+        this.inactivar = false;
+        this.tituloMotivo = '';
     }
 }

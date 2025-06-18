@@ -4,29 +4,42 @@ import { MenuItem, MessageService } from 'primeng/api';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AppToolbarCrud } from '../../layout/component/app.toolbar-crud';
 import { FloatLabelModule } from 'primeng/floatlabel';
-import { SelectModule } from 'primeng/select';
 import { MessageModule } from 'primeng/message';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { ButtonModule } from 'primeng/button';
+import { SelectModule } from 'primeng/select';
+import { CatalogoModel } from '../../models/catalogo.model';
 import { DialogModule } from 'primeng/dialog';
+import { SelectGridComponent } from '../../helpers/select-grid.component';
+import { SubSectorModel } from '../../models/sub-sector.model';
+import { HeaderTableModel } from '../../models/header-table.model';
 import { InputTextModule } from 'primeng/inputtext';
 import { SubSectorService } from '../../service/sub-sector.service';
-import { SubSectorModel } from '../../models/sub-sector.model';
-import { SelectGridComponent } from '../../helpers/select-grid.component';
-import { HeaderTableModel } from '../../models/header-table.model';
 import { CatalogoService } from '../../service/catalogo.service';
-import { CatalogoModel } from '../../models/catalogo.model';
 import { InstitucionService } from '../../service/institucion.service';
+import { ActivatedRoute } from '@angular/router';
+import { InstitucionModel } from '../../models/institucion.model';
 
 @Component({
-    selector: 'app-institucion-nuevo',
+    selector: 'app-institucion-editar',
     standalone: true,
     template: `<div class="card">
-            <app-detalle-principal [titulo]="'Nueva Institución'" [items]="items"></app-detalle-principal>
+            <app-detalle-principal [titulo]="titulo" [items]="items"></app-detalle-principal>
             <form [formGroup]="institucionForm" (ngSubmit)="onSubmit()">
-                <app-toolbar-crud [linkRegreso]="'/configuracion-institucional/instituciones'" [grabando]="grabando" [initializeUserForm]="initializeUserForm"></app-toolbar-crud>
+                <app-toolbar-crud [linkRegreso]="'/configuracion-institucional/instituciones'" [grabando]="grabando" [initializeUserForm]="initializeUserForm" [mostrarReset]="false"></app-toolbar-crud>
                 <div class="p-fluid">
+                    <div class="p-field mt-8 mb-6">
+                        <p-floatLabel>
+                            <label for="id">Id</label>
+                            <input id="id" type="text" pInputText formControlName="id" class="w-1/5" />
+                        </p-floatLabel>
+                        @if (institucionForm.get('id')?.invalid && institucionForm.get('id')?.touched) {
+                            @if (institucionForm.get('id')?.errors?.['required']) {
+                                <p-message severity="error" variant="simple" size="small" text="El ID es requerido." />
+                            }
+                        }
+                    </div>
                     <div class="p-field mt-8 mb-6 flex w-full gap-6">
                         <div class="flex-2">
                             <p-floatLabel>
@@ -163,43 +176,42 @@ import { InstitucionService } from '../../service/institucion.service';
         <p-dialog header="Seleccionar Subsector" [modal]="true" [(visible)]="visible" [style]="{ width: '96rem' }">
             <app-select-grid [data]="subsectores" [globalFilters]="filters" [headers]="headers" (returnData)="seleccionSubSector($event)"></app-select-grid>
         </p-dialog>`,
-    imports: [AppDetallePrincipal, ReactiveFormsModule, AppToolbarCrud, FloatLabelModule, SelectModule, MessageModule, InputGroupModule, InputGroupAddonModule, ButtonModule, DialogModule, InputTextModule, SelectGridComponent],
+    imports: [AppDetallePrincipal, ReactiveFormsModule, AppToolbarCrud, FloatLabelModule, MessageModule, InputGroupModule, InputGroupAddonModule, ButtonModule, SelectModule, DialogModule, SelectGridComponent, InputTextModule],
     providers: [MessageService]
 })
-export class InstitucionNuevoComponent implements OnInit {
+export class InstitucionEditarComponent implements OnInit {
     items: MenuItem[] = [];
     institucionForm!: FormGroup;
     grabando: boolean = false;
-    visible: boolean = false;
-    subsectores: SubSectorModel[] = [];
-    filters: string[] = ['codigo', 'nombre', 'nombreMacroSector', 'nombreSector'];
-    loading: boolean = true;
-    headers: HeaderTableModel[] = [];
     catalogos: CatalogoModel[] = [];
+    visible: boolean = false;
+    filters: string[] = [];
+    titulo: string = 'Editar Institución';
+    headers: HeaderTableModel[] = [
+        { id: 'codigo', label: 'Código', type: 'text' },
+        { id: 'nombre', label: 'Nombre', type: 'text' },
+        { id: 'nombreMacroSector', label: 'Macro Sector', type: 'text' },
+        { id: 'nombreSector', label: 'Sector', type: 'text' }
+    ];
+    subsectores: SubSectorModel[] = [];
+    id: number = 0;
+    institucion!: InstitucionModel;
     constructor(
         private fb: FormBuilder,
         private subSectorService: SubSectorService,
         private catalogoService: CatalogoService,
         private messageService: MessageService,
-        private institucionService: InstitucionService
+        private institucionService: InstitucionService,
+        private activateRoute: ActivatedRoute
     ) {}
-    ngOnInit() {
-        this.items = [{ icon: 'pi pi-home', route: '/' }, { label: 'Configuracion Institucional' }, { label: 'Instituciones' }, { label: 'Nuevo', route: '/instituciones/nuevo' }];
-        this.initializeUserForm();
+    ngOnInit(): void {
+        this.items = [{ icon: 'pi pi-home', route: '/' }, { label: 'Configuracion Institucional' }, { label: 'Instituciones' }, { label: 'Editar', route: '/instituciones/editar' }];
         this.subSectorService.getSubsectores().subscribe({
             next: (data) => {
                 this.subsectores = data;
-                this.loading = false;
-                this.headers = [
-                    { id: 'codigo', label: 'Código', type: 'text' },
-                    { id: 'nombre', label: 'Nombre', type: 'text' },
-                    { id: 'nombreMacroSector', label: 'Macro Sector', type: 'text' },
-                    { id: 'nombreSector', label: 'Sector', type: 'text' }
-                ];
             },
             error: (error) => {
                 console.error('Error loading subsectores:', error);
-                this.loading = false;
             }
         });
 
@@ -211,38 +223,66 @@ export class InstitucionNuevoComponent implements OnInit {
                 console.error('Error loading catalogos:', error);
             }
         });
+        this.id = Number(this.activateRoute.snapshot.paramMap.get('id'));
+
+        this.institucionService.getInstitucionById(this.id).subscribe({
+            next: (data) => {
+                this.institucion = data;
+                this.titulo = `Editar Institución: ${data.nombre}`;
+                this.institucionForm.patchValue({
+                    id: data.id,
+                    subSectorId: data.subsectorId,
+                    codigo: data.codigo,
+                    nombre: data.nombre,
+                    macroSectorNombre: data.nombreMacroSector,
+                    sectorNombre: data.nombreSector,
+                    subSectorNombre: data.nombreSubsector,
+                    nivelGobierno: data.nivelGobierno,
+                    correo: data.correo,
+                    direccion: data.direccion,
+                    telefono: data.telefono
+                });
+            },
+            error: (error) => {
+                console.error('Error loading institucion:', error);
+            }
+        });
+
+        this.initializeUserForm();
     }
     onSubmit() {
         if (this.institucionForm.invalid) {
-            console.warn('Formulario inválido:', this.institucionForm.errors);
             this.institucionForm.markAllAsTouched();
             return;
         }
 
         this.grabando = true;
-        this.institucionService.addInstitucion(this.institucionForm.value).subscribe({
+        const institucionData = {
+            ...this.institucion,
+            ...this.institucionForm.value
+        };
+
+        this.institucionService.updateInstitucion(this.id, institucionData).subscribe({
             next: (response) => {
                 const { error, mensaje } = response;
                 if (error) {
                     this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
+                    this.grabando = false;
                     return;
                 }
                 this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
+                this.grabando = false;
             },
             error: (error) => {
-                console.error('Error al guardar la institución:', error);
-                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar la institución.' });
+                console.error('Error updating institucion:', error);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar la institución.' });
                 this.grabando = false;
-            },
-            complete: () => {
-                this.grabando = false;
-                this.institucionForm.reset();
-                this.institucionForm.markAsPristine();
             }
         });
     }
     initializeUserForm() {
         this.institucionForm = this.fb.group({
+            id: [{ value: '', disabled: true }, [Validators.required]],
             subSectorId: ['', [Validators.required]],
             codigo: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(20)]],
             nombre: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(255)]],
@@ -255,12 +295,7 @@ export class InstitucionNuevoComponent implements OnInit {
             telefono: ['', [Validators.required, Validators.pattern('^[0-9]+$')]]
         });
     }
-    showSelect() {
-        this.visible = true;
-    }
-
     seleccionSubSector($event: any) {
-        console.log('Subsector seleccionado:', $event);
         this.visible = false;
         this.institucionForm.patchValue({
             macroSectorNombre: $event.nombreMacroSector,
@@ -268,5 +303,8 @@ export class InstitucionNuevoComponent implements OnInit {
             subSectorNombre: $event.nombre,
             subSectorId: $event.id
         });
+    }
+    showSelect() {
+        this.visible = true;
     }
 }

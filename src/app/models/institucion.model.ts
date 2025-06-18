@@ -10,4 +10,5 @@ export interface InstitucionModel {
     telefono: string;
     correo: string;
     estado: string;
+    nivelGobierno: string;
 }
