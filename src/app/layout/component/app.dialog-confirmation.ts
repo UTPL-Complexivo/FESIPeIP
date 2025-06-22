@@ -10,7 +10,7 @@ import { TextareaModule } from 'primeng/textarea';
     template: `<p-dialog [header]="tituloMotivo" [(visible)]="displayMotivoDialog" [modal]="true" [closable]="false">
         <form [formGroup]="motivoForm" (ngSubmit)="confirmarEliminacion()">
             <div class="p-field">
-                <textarea id="motivo" pInputTextarea formControlName="motivo" rows="3"></textarea>
+                <textarea id="motivo" pInputTextarea formControlName="motivo" rows="3" class="w-full"></textarea>
             </div>
             <div class="p-dialog-footer">
                 <button pButton type="button" label="Cancelar" class="p-button-secondary" (click)="cancelarEliminacion()"></button>

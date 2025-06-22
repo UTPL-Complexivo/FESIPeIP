@@ -3,7 +3,7 @@ import { RippleModule } from 'primeng/ripple';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { CommonModule } from '@angular/common';
-import { Product, ProductService } from '../../service/product.service';
+
 
 @Component({
     standalone: true,
@@ -34,14 +34,25 @@ import { Product, ProductService } from '../../service/product.service';
             </ng-template>
         </p-table>
     </div>`,
-    providers: [ProductService]
+    providers: []
 })
 export class RecentSalesWidget {
-    products!: Product[];
+    products!: any[];
 
-    constructor(private productService: ProductService) {}
+    constructor() {}
 
     ngOnInit() {
-        this.productService.getProductsSmall().then((data) => (this.products = data));
+        this.products = [
+            { name: 'Bamboo Watch', price: 65, image: 'bamboo-watch.jpg' },
+            { name: 'Black Watch', price: 72, image: 'black-watch.jpg' },
+            { name: 'Blue Band', price: 79, image: 'blue-band.jpg' },
+            { name: 'Bracelet', price: 95, image: 'bracelet.jpg' },
+            { name: 'Brown Purse', price: 120, image: 'brown-purse.jpg' },
+            { name: 'Chakra Bracelet', price: 32, image: 'chakra-bracelet.jpg' },
+            { name: 'Galaxy Earrings', price: 34, image: 'galaxy-earrings.jpg' },
+            { name: 'Game Controller', price: 99, image: 'game-controller.jpg' },
+            { name: 'Gold Phone Case', price: 24, image: 'gold-phone-case.jpg' },
+            { name: 'Green Earbuds', price: 89, image: 'green-earbuds.jpg' }
+        ];
     }
 }
