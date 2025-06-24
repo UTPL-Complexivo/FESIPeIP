@@ -56,7 +56,7 @@ import { ObjetivoInstitucionalService } from '../../../service/objetivo-instituc
                     <div class="p-field mb-6">
                         <p-floatLabel>
                             <label for="descripcion">Descripcion</label>
-                             <textarea rows="5" pTextarea formControlName="descripcion" class="w-1/2"></textarea>
+                            <textarea rows="5" pTextarea formControlName="descripcion" class="w-1/2"></textarea>
                         </p-floatLabel>
                     </div>
                 </div>
@@ -67,10 +67,14 @@ import { ObjetivoInstitucionalService } from '../../../service/objetivo-instituc
     providers: [MessageService]
 })
 export class ObjetivoInstitucionalNuevoComponent implements OnInit {
-    items: MenuItem[] =[{ icon: 'pi pi-home', route: '/' }, { label: 'Objetivos Estratégicos' }, { label: 'Objetivos Institucionales' }, { label: 'Nuevo' }]
+    items: MenuItem[] = [{ icon: 'pi pi-home', route: '/' }, { label: 'Objetivos Estratégicos' }, { label: 'Objetivos Institucionales' }, { label: 'Nuevo' }];
     formObjetivoInstitucional!: FormGroup;
     grabando: boolean = false;
-    constructor(private fb: FormBuilder, private oiService: ObjetivoInstitucionalService, private messageService: MessageService) {}
+    constructor(
+        private fb: FormBuilder,
+        private oiService: ObjetivoInstitucionalService,
+        private messageService: MessageService
+    ) {}
 
     ngOnInit() {
         this.initializeUserForm();
@@ -86,17 +90,17 @@ export class ObjetivoInstitucionalNuevoComponent implements OnInit {
         this.grabando = true;
         this.oiService.addObjetivoInstitucional(this.formObjetivoInstitucional.value).subscribe({
             next: (response) => {
-                const {error, mensaje} = response;
-                if(error) {
-                    this.messageService.add({severity: 'error', summary: 'Error', detail: mensaje});
+                const { error, mensaje } = response;
+                if (error) {
+                    this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
                     return;
                 }
-                this.messageService.add({severity: 'success', summary: 'Éxito', detail: mensaje});
+                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
                 this.initializeUserForm();
             },
             error: (error) => {
                 console.error('Error al guardar el objetivo institucional:', error);
-                this.messageService.add({severity: 'error', summary: 'Error', detail: 'No se pudo guardar el objetivo institucional.'});
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar el objetivo institucional.' });
                 this.grabando = false;
             },
             complete: () => {

@@ -132,7 +132,6 @@ import { AppEstadoGeneral } from "../../../layout/component/app.estado-general";
     providers: [MessageService]
 })
 export class MacroSectorComponent implements OnInit {
-
     @ViewChild('filter') filter!: ElementRef;
     items: MenuItem[] = [];
     macro_sectores: MacroSectorModel[] = [];

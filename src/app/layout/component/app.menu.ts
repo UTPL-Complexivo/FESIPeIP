@@ -39,6 +39,7 @@ const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
             items: [
                 { label: 'Objetivos Institucionales', icon: 'pi pi-fw pi-bullseye', routerLink: ['/objetivo-estrategico/objetivo-institucional'] },
                 { label: 'Objetivos PND', icon: 'pi pi-fw pi-bolt', routerLink: ['/objetivo-estrategico/objetivo-pnd'] },
+                { label: 'O. Desarrollo Sostenible', icon: 'pi pi-fw pi-chart-scatter', routerLink: ['/objetivo-estrategico/objetivo-ds'] },
             ]
         }
     ]

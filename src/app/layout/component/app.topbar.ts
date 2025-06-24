@@ -34,7 +34,7 @@ import { AppUser } from "./app.user";
                         />
                     </g>
                 </svg>
-                <span>SAKAI</span>
+                <span>SIPeIP 2.0</span>
             </a>
         </div>
 
