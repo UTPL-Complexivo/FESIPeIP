@@ -45,7 +45,7 @@ const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
         },{
           label: 'Proyectos de Inversión'  ,
           items:[
-            {label: 'Tipologías de intervencion', icon: 'pi pi-fw pi-cog', routerLink: ['/proyectos-inversion/tipologia-intervencion']},
+            {label: 'Tipologías de intervencion', icon: 'pi pi-fw pi-cog', routerLink: ['/proyecto-inversion/tipologia']},
           ]
         }
     ]
