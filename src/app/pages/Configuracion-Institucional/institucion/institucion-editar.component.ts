@@ -20,6 +20,7 @@ import { CatalogoService } from '../../../service/catalogo.service';
 import { InstitucionService } from '../../../service/institucion.service';
 import { ActivatedRoute } from '@angular/router';
 import { InstitucionModel } from '../../../models/institucion.model';
+import { ActiveFilterPipe } from '../../../pipes/active-filter.pipe';
 
 @Component({
     selector: 'app-institucion-editar',
@@ -174,9 +175,9 @@ import { InstitucionModel } from '../../../models/institucion.model';
             </form>
         </div>
         <p-dialog header="Seleccionar Subsector" [modal]="true" [(visible)]="visible" [style]="{ width: '96rem' }">
-            <app-select-grid [data]="subsectores" [globalFilters]="filters" [headers]="headers" (returnData)="seleccionSubSector($event)"></app-select-grid>
+            <app-select-grid [data]="subsectores | activeFilter" [globalFilters]="filters" [headers]="headers" (returnData)="seleccionSubSector($event)"></app-select-grid>
         </p-dialog>`,
-    imports: [AppDetallePrincipal, ReactiveFormsModule, AppToolbarCrud, FloatLabelModule, MessageModule, InputGroupModule, InputGroupAddonModule, ButtonModule, SelectModule, DialogModule, SelectGridComponent, InputTextModule],
+    imports: [AppDetallePrincipal, ReactiveFormsModule, AppToolbarCrud, FloatLabelModule, MessageModule, InputGroupModule, InputGroupAddonModule, ButtonModule, SelectModule, DialogModule, SelectGridComponent, InputTextModule, ActiveFilterPipe],
     providers: [MessageService]
 })
 export class InstitucionEditarComponent implements OnInit {

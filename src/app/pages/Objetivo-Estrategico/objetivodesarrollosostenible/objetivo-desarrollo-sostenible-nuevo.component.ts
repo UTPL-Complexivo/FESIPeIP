@@ -19,6 +19,9 @@ import { ObjetivoDesarrolloSostenibleService } from '../../../service/objetivo-d
             <form [formGroup]="formODS" (ngSubmit)="onSubmit()">
                 <app-toolbar-crud [linkRegreso]="'/objetivo-estrategico/objetivo-ds'" [grabando]="grabando" [initializeUserForm]="initializeForm.bind(this)"></app-toolbar-crud>
                 <div class="p-fluid">
+                    @if(formODS.get('icono')?.value && formODS.get('icono')?.value.trim() !== '' && !formODS.get('icono')?.errors?.['pattern']) {
+                            <img [src]="formODS.get('icono')?.value" alt="Icono ODS" class="w-64 h-64 mt-2" />
+                        }
                     <div class="p-field mt-8 mb-6">
                         <p-floatLabel>
                             <input id="codigo" type="text" pInputText formControlName="codigo" class="w-1/5" style="text-transform:uppercase" />

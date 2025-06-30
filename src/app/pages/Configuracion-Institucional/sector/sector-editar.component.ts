@@ -13,6 +13,7 @@ import { MacroSectorService } from '../../../service/macro-sector.service';
 import { ActivatedRoute } from '@angular/router';
 import { SectorService } from '../../../service/sector.service';
 import { SectorModel } from '../../../models/sector.model';
+import { ActiveFilterPipe } from '../../../pipes/active-filter.pipe';
 
 @Component({
     selector: 'app-sector-editar',
@@ -35,7 +36,7 @@ import { SectorModel } from '../../../models/sector.model';
                 </div>
                 <div class="p-field mt-8 mb-6">
                     <p-floatLabel>
-                        <p-select id="macroSectorId" [options]="macroSectores" formControlName="macroSectorId" optionValue="id" optionLabel="nombre" class="w-1/3" [showClear]="true"> </p-select>
+                        <p-select id="macroSectorId" [options]="macroSectores | activeFilter" formControlName="macroSectorId" optionValue="id" optionLabel="nombre" class="w-1/3" [showClear]="true"> </p-select>
                         <label for="macroSectorId">Macro Sector</label>
                     </p-floatLabel>
                     @if (sectorForm.get('macroSectorId')?.invalid && sectorForm.get('macroSectorId')?.touched) {
@@ -81,7 +82,7 @@ import { SectorModel } from '../../../models/sector.model';
             </div>
         </form>
     </div>`,
-    imports: [AppDetallePrincipal, ReactiveFormsModule, AppToolbarCrud, FloatLabel, MessageModule, InputTextModule, ButtonModule, SelectModule],
+    imports: [AppDetallePrincipal, ReactiveFormsModule, AppToolbarCrud, FloatLabel, MessageModule, InputTextModule, ButtonModule, SelectModule, ActiveFilterPipe],
     providers: [MessageService]
 })
 export class SectorEditarComponent implements OnInit {

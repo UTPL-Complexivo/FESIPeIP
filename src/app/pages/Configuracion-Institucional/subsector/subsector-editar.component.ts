@@ -14,6 +14,7 @@ import { SectorService } from '../../../service/sector.service';
 import { SubSectorService } from '../../../service/sub-sector.service';
 import { ActivatedRoute } from '@angular/router';
 import { SubSectorModel } from '../../../models/sub-sector.model';
+import { ActiveFilterPipe } from '../../../pipes/active-filter.pipe';
 
 @Component({
     selector: 'app-subsector-editar',
@@ -36,7 +37,7 @@ import { SubSectorModel } from '../../../models/sub-sector.model';
                 </div>
                 <div class="p-field mt-8 mb-6">
                     <p-floatLabel>
-                        <p-select id="macroSectorId" [options]="macroSectores" formControlName="macroSectorId" optionValue="id" optionLabel="nombre" class="w-1/3" [showClear]="true" (onChange)="buscarSector($event)" [filter]="true"> </p-select>
+                        <p-select id="macroSectorId" [options]="macroSectores | activeFilter" formControlName="macroSectorId" optionValue="id" optionLabel="nombre" class="w-1/3" [showClear]="true" (onChange)="buscarSector($event)" [filter]="true"> </p-select>
                         <label for="macroSectorId">Macro Sector</label>
                     </p-floatLabel>
                     @if (subsectorForm.get('macroSectorId')?.invalid && subsectorForm.get('macroSectorId')?.touched) {
@@ -47,7 +48,7 @@ import { SubSectorModel } from '../../../models/sub-sector.model';
                 </div>
                 <div class="p-field mt-8 mb-6">
                     <p-floatLabel>
-                        <p-select id="sectorId" [options]="sectores" formControlName="sectorId" optionValue="id" optionLabel="nombre" class="w-1/3" [showClear]="true" [loading]="cargaSector" [filter]="true"> </p-select>
+                        <p-select id="sectorId" [options]="sectores | activeFilter" formControlName="sectorId" optionValue="id" optionLabel="nombre" class="w-1/3" [showClear]="true" [loading]="cargaSector" [filter]="true"> </p-select>
                         <label for="sectorId">Sector</label>
                     </p-floatLabel>
                     @if (subsectorForm.get('sectorId')?.invalid && subsectorForm.get('sectorId')?.touched) {
@@ -93,7 +94,7 @@ import { SubSectorModel } from '../../../models/sub-sector.model';
             </div>
         </form>
     </div>`,
-    imports: [AppDetallePrincipal, ReactiveFormsModule, AppToolbarCrud, FloatLabelModule, MessageModule, SelectModule, InputTextModule],
+    imports: [AppDetallePrincipal, ReactiveFormsModule, AppToolbarCrud, FloatLabelModule, MessageModule, SelectModule, InputTextModule, ActiveFilterPipe],
     providers: [MessageService]
 })
 export class SubsectorEditarComponent implements OnInit {

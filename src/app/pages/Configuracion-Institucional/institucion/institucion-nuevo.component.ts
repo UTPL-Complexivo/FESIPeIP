@@ -18,6 +18,7 @@ import { HeaderTableModel } from '../../../models/header-table.model';
 import { CatalogoService } from '../../../service/catalogo.service';
 import { CatalogoModel } from '../../../models/catalogo.model';
 import { InstitucionService } from '../../../service/institucion.service';
+import { ActiveFilterPipe } from '../../../pipes/active-filter.pipe';
 
 @Component({
     selector: 'app-institucion-nuevo',
@@ -161,9 +162,9 @@ import { InstitucionService } from '../../../service/institucion.service';
             </form>
         </div>
         <p-dialog header="Seleccionar Subsector" [modal]="true" [(visible)]="visible" [style]="{ width: '96rem' }">
-            <app-select-grid [data]="subsectores" [globalFilters]="filters" [headers]="headers" (returnData)="seleccionSubSector($event)"></app-select-grid>
+            <app-select-grid [data]="subsectores | activeFilter" [globalFilters]="filters" [headers]="headers" (returnData)="seleccionSubSector($event)"></app-select-grid>
         </p-dialog>`,
-    imports: [AppDetallePrincipal, ReactiveFormsModule, AppToolbarCrud, FloatLabelModule, SelectModule, MessageModule, InputGroupModule, InputGroupAddonModule, ButtonModule, DialogModule, InputTextModule, SelectGridComponent],
+    imports: [AppDetallePrincipal, ReactiveFormsModule, AppToolbarCrud, FloatLabelModule, SelectModule, MessageModule, InputGroupModule, InputGroupAddonModule, ButtonModule, DialogModule, InputTextModule, SelectGridComponent, ActiveFilterPipe],
     providers: [MessageService]
 })
 export class InstitucionNuevoComponent implements OnInit {

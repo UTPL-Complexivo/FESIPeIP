@@ -10,5 +10,8 @@ export default [
     { path: 'objetivo-ds', loadComponent: () => import('./objetivodesarrollosostenible/objetivo-desarrollo-sostenible.component').then((o) => o.ObjetivoDesarrolloSostenibleComponent) },
     { path: 'objetivo-ds/nuevo', loadComponent: () => import('./objetivodesarrollosostenible/objetivo-desarrollo-sostenible-nuevo.component').then((o) => o.ObjetivoDesarrolloSostenibleNuevoComponent) },
     { path: 'objetivo-ds/editar/:id', loadComponent: () => import('./objetivodesarrollosostenible/objetivo-desarrollo-sostenible-editar.component').then((o) => o.ObjetivoDesarrolloSostenibleEditarComponent) },
+    { path: 'alineacion', loadComponent: () => import('./alineacion/alineacion.component').then((a) => a.AlineacionComponent) },
+    { path: 'alineacion/nuevo', loadComponent: () => import('./alineacion/alineacion-nuevo.component').then((a) => a.AlineacionNuevoComponent) },
+    { path: 'alineacion/editar/:id', loadComponent: () => import('./alineacion/alineacion-editar.component').then((a) => a.AlineacionEditarComponent) },
     { path: '**', redirectTo: '/notfound' }
 ] as Routes;

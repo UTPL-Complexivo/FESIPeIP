@@ -16,10 +16,13 @@ import { ObjetivoDesarrolloSostenibleModel } from '../../../models/objetivo-desa
     selector: 'app-ods-editar',
     template: `
         <div class="card">
-            <app-detalle-principal [items]="items" titulo="Nuevo Objetivo Institucional"></app-detalle-principal>
+            <app-detalle-principal [items]="items" [titulo]="titulo"></app-detalle-principal>
             <form [formGroup]="formODS" (ngSubmit)="onSubmit()">
                 <app-toolbar-crud [linkRegreso]="'/objetivo-estrategico/objetivo-ds'" [grabando]="grabando" [initializeUserForm]="initializeForm.bind(this)" [mostrarReset]="false"></app-toolbar-crud>
                 <div class="p-fluid">
+                    @if(formODS.get('icono')?.value && formODS.get('icono')?.value.trim() !== '' && !formODS.get('icono')?.errors?.['pattern']) {
+                            <img [src]="formODS.get('icono')?.value" alt="Icono ODS" class="w-64 h-64 mt-2" />
+                        }
                     <div class="p-field mt-8 mb-6">
                         <p-floatLabel>
                             <input id="id" type="text" pInputText formControlName="id" class="w-1/5" />
@@ -94,6 +97,7 @@ export class ObjetivoDesarrolloSostenibleEditarComponent implements OnInit {
     grabando: boolean = false;
     id: number = 0;
     ods!: ObjetivoDesarrolloSostenibleModel;
+    titulo: string = 'Editar Objetivo de Desarrollo Sostenible';
     constructor(
         private fb: FormBuilder,
         private activatedRoute: ActivatedRoute,
@@ -106,6 +110,7 @@ export class ObjetivoDesarrolloSostenibleEditarComponent implements OnInit {
         if (this.id) {
             this.odsService.getObjetivoDesarrolloSostenible(this.id).subscribe({
                 next: (data) => {
+                    this.titulo = `Editar Objetivo Desarrollo Sostenible: ${data.codigo} - ${data.nombre}`;
                     this.ods = data;
                     this.formODS.patchValue(data);
                 },

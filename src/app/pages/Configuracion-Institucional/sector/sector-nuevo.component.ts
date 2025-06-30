@@ -12,6 +12,7 @@ import { MacroSectorService } from '../../../service/macro-sector.service';
 import { MacroSectorModel } from '../../../models/macro-sector.model';
 import { SelectModule } from 'primeng/select';
 import { SectorService } from '../../../service/sector.service';
+import { ActiveFilterPipe } from '../../../pipes/active-filter.pipe';
 
 @Component({
     selector: 'app-sector-nuevo',
@@ -23,7 +24,7 @@ import { SectorService } from '../../../service/sector.service';
             <div class="p-fluid">
                 <div class="p-field mt-8 mb-6">
                     <p-floatLabel>
-                    <p-select id="macroSectorId" [options]="macroSectores" formControlName="macroSectorId" optionValue="id" optionLabel="nombre" class="w-1/3" [showClear]="true"> </p-select>
+                    <p-select id="macroSectorId" [options]="macroSectores | activeFilter" formControlName="macroSectorId" optionValue="id" optionLabel="nombre" class="w-1/3" [showClear]="true"> </p-select>
                     <label for="macroSectorId">Macro Sector</label>
                     </p-floatLabel>
                     @if (sectorForm.get('macroSectorId')?.invalid && sectorForm.get('macroSectorId')?.touched) {
@@ -69,7 +70,7 @@ import { SectorService } from '../../../service/sector.service';
             </div>
         </form>
     </div>`,
-    imports: [AppDetallePrincipal, AppToolbarCrud, InputTextModule, InputTextModule, ButtonModule, CommonModule, MessageModule, FloatLabelModule, ReactiveFormsModule, SelectModule],
+    imports: [AppDetallePrincipal, AppToolbarCrud, InputTextModule, InputTextModule, ButtonModule, CommonModule, MessageModule, FloatLabelModule, ReactiveFormsModule, SelectModule, ActiveFilterPipe],
     providers: [MessageService]
 })
 export class SectorNuevoComponent implements OnInit {

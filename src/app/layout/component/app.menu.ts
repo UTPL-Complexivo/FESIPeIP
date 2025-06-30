@@ -40,7 +40,13 @@ const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
                 { label: 'Objetivos Institucionales', icon: 'pi pi-fw pi-bullseye', routerLink: ['/objetivo-estrategico/objetivo-institucional'] },
                 { label: 'Objetivos PND', icon: 'pi pi-fw pi-bolt', routerLink: ['/objetivo-estrategico/objetivo-pnd'] },
                 { label: 'O. Desarrollo Sostenible', icon: 'pi pi-fw pi-chart-scatter', routerLink: ['/objetivo-estrategico/objetivo-ds'] },
+                { label: 'Alineaciones', icon: 'pi pi-fw pi-book', routerLink: ['/objetivo-estrategico/alineacion'] },
             ]
+        },{
+          label: 'Proyectos de Inversión'  ,
+          items:[
+            {label: 'Tipologías de intervencion', icon: 'pi pi-fw pi-cog', routerLink: ['/proyectos-inversion/tipologia-intervencion']},
+          ]
         }
     ]
 };

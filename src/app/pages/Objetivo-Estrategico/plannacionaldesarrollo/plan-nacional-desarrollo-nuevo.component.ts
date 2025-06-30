@@ -12,6 +12,7 @@ import { CatalogoModel } from '../../../models/catalogo.model';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
 import { PlanNacionalDesarrolloService } from '../../../service/plan-nacional-desarrollo.service';
+import { ActiveFilterPipe } from '../../../pipes/active-filter.pipe';
 
 @Component({
     selector: 'app-plan-nacional-desarrollo-nuevo',
@@ -58,7 +59,7 @@ import { PlanNacionalDesarrolloService } from '../../../service/plan-nacional-de
                     </div>
                      <div class="p-field mt-8 mb-6">
                         <p-floatLabel>
-                            <p-select id="eje" formControlName="eje" [options]="ejes" optionLabel="valor" optionValue="valor" class="w-1/5" [showClear]="true"> </p-select>
+                            <p-select id="eje" formControlName="eje" [options]="ejes | activeFilter" optionLabel="valor" optionValue="valor" class="w-1/5" [showClear]="true"> </p-select>
                             <label for="eje">Eje</label>
                         </p-floatLabel>
                         @if (formPND.get('eje')?.invalid && formPND.get('eje')?.touched) {
@@ -77,7 +78,7 @@ import { PlanNacionalDesarrolloService } from '../../../service/plan-nacional-de
             </form>
         </div>
     `,
-    imports: [AppDetallePrincipal, ReactiveFormsModule, AppToolbarCrud, FloatLabelModule, MessageModule, InputTextModule, ButtonModule, TextareaModule, SelectModule],
+    imports: [AppDetallePrincipal, ReactiveFormsModule, AppToolbarCrud, FloatLabelModule, MessageModule, InputTextModule, ButtonModule, TextareaModule, SelectModule, ActiveFilterPipe],
     providers: [MessageService]
 })
 export class PlanNacionalDesarrolloNuevoComponent implements OnInit {

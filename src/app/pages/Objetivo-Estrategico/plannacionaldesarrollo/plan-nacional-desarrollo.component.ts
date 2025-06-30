@@ -14,6 +14,7 @@ import { PlanNacionalDesarrolloService } from '../../../service/plan-nacional-de
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { DeleteModel } from '../../../models/delete.model';
+import { EjeColorPipe } from '../../../pipes/eje-color.pipe';
 
 @Component({
     selector: 'app-plan-nacional-desarrollo',
@@ -79,8 +80,13 @@ import { DeleteModel } from '../../../models/delete.model';
                 </ng-template>
                 <ng-template #groupheader let-objetivo_pnd>
                     <tr pRowGroupHeader>
-                        <th colspan="5" class="text-left">
-                            <app-estado-general [estado]="objetivo_pnd.eje"></app-estado-general>
+                        <th colspan="6" class="text-left">
+                            <div class="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-l-4" [style.border-left-color]="objetivo_pnd.eje | ejeColor:'hex'">
+                                <div class="w-4 h-4 rounded-full" [style.background-color]="objetivo_pnd.eje | ejeColor:'hex'"></div>
+                                <span [class]="'px-2 py-1 rounded text-white text-sm font-semibold ' + (objetivo_pnd.eje | ejeColor:'background')">
+                                    EJE {{ objetivo_pnd.eje }}
+                                </span>
+                            </div>
                         </th>
                     </tr>
                 </ng-template>
@@ -95,6 +101,7 @@ import { DeleteModel } from '../../../models/delete.model';
                             }
                             <button pButton icon="pi pi-trash" severity="danger" class="p-button-rounded p-button-text" (click)="deletePND(objetivo_pnd)" pTooltip="Eliminar" tooltipPosition="top"></button>
                         </td>
+
                         <td>{{ objetivo_pnd.codigo }}</td>
                         <td>{{ objetivo_pnd.nombre }}</td>
                         <td>
@@ -104,12 +111,12 @@ import { DeleteModel } from '../../../models/delete.model';
                 </ng-template>
                 <ng-template #emptymessage>
                     <tr>
-                        <td colspan="5">Al momento no se dispone de información.</td>
+                        <td colspan="6">Al momento no se dispone de información.</td>
                     </tr>
                 </ng-template>
                 <ng-template #loadingbody>
                     <tr>
-                        <td colspan="5">Cargando informacion. Por favor espere.</td>
+                        <td colspan="6">Cargando informacion. Por favor espere.</td>
                     </tr>
                 </ng-template>
             </p-table>
@@ -117,7 +124,7 @@ import { DeleteModel } from '../../../models/delete.model';
         <p-toast position="top-right"></p-toast>
         <app-dialog-confirmation [displayMotivoDialog]="displayMotivoDialog" [inactivar]="inactivar" [tituloMotivo]="tituloMotivo" [id]="idAEliminar" (cerrarDialogo)="dialogo($event)" (save)="confirmarEliminacion($event)"></app-dialog-confirmation>
     `,
-    imports: [AppCabeceraPrincipal, TableModule, IconFieldModule, InputIconModule, RouterModule, AppEstadoGeneral, ToastModule, AppDialogConfirmation, ButtonModule, InputTextModule],
+    imports: [AppCabeceraPrincipal, TableModule, IconFieldModule, InputIconModule, RouterModule, AppEstadoGeneral, ToastModule, AppDialogConfirmation, ButtonModule, InputTextModule, EjeColorPipe],
     providers: [MessageService]
 })
 export class PlanNacionalDesarrolloComponent implements OnInit {
