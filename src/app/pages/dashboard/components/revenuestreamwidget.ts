@@ -1,11 +1,8 @@
-import { Component, OnInit, OnDestroy, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, computed, input, ChangeDetectionStrategy } from '@angular/core';
 import { ChartModule } from 'primeng/chart';
 import { CommonModule } from '@angular/common';
-import { debounceTime, Subscription, forkJoin } from 'rxjs';
+import { debounceTime, Subscription } from 'rxjs';
 import { LayoutService } from '../../../layout/service/layout.service';
-import { TipologiaService } from '../../../service/tipologia.service';
-import { ActividadService } from '../../../service/actividad.service';
-import { TipologiaActividadService } from '../../../service/tipologia-actividad.service';
 import { TipologiaModel } from '../../../models/tipologia.model';
 import { ActividadModel } from '../../../models/actividad.model';
 import { TipologiaActividadModel } from '../../../models/tipologia-actividad.model';
@@ -27,14 +24,12 @@ import { TipologiaActividadModel } from '../../../models/tipologia-actividad.mod
 })
 export class RevenueStreamWidget implements OnInit, OnDestroy {
     private layoutService = inject(LayoutService);
-    private tipologiaService = inject(TipologiaService);
-    private actividadService = inject(ActividadService);
-    private tipologiaActividadService = inject(TipologiaActividadService);
 
-    loading = signal(true);
-    tipologias = signal<TipologiaModel[]>([]);
-    actividades = signal<ActividadModel[]>([]);
-    tipologiasActividades = signal<TipologiaActividadModel[]>([]);
+    // Inputs para recibir toda la data
+    tipologias = input<TipologiaModel[]>([]);
+    actividades = input<ActividadModel[]>([]);
+    tipologiasActividades = input<TipologiaActividadModel[]>([]);
+    loading = input<boolean>(false);
 
     private subscription!: Subscription;
 
@@ -140,30 +135,8 @@ export class RevenueStreamWidget implements OnInit, OnDestroy {
     });
 
     ngOnInit() {
-        this.loadData();
         this.subscription = this.layoutService.configUpdate$.pipe(debounceTime(25)).subscribe(() => {
             // Trigger chart update when layout changes
-        });
-    }
-
-    private loadData() {
-        this.loading.set(true);
-
-        forkJoin({
-            tipologias: this.tipologiaService.getTipologias(),
-            actividades: this.actividadService.getActividades(),
-            tipologiasActividades: this.tipologiaActividadService.getTipologiasActividades()
-        }).subscribe({
-            next: (data) => {
-                this.tipologias.set(data.tipologias);
-                this.actividades.set(data.actividades);
-                this.tipologiasActividades.set(data.tipologiasActividades);
-                this.loading.set(false);
-            },
-            error: (error) => {
-                console.error('Error loading project investment data:', error);
-                this.loading.set(false);
-            }
         });
     }
 
