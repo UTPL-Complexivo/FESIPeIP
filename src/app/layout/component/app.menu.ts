@@ -40,13 +40,20 @@ const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
                 { label: 'Objetivos Institucionales', icon: 'pi pi-fw pi-bullseye', routerLink: ['/objetivo-estrategico/objetivo-institucional'] },
                 { label: 'Objetivos PND', icon: 'pi pi-fw pi-bolt', routerLink: ['/objetivo-estrategico/objetivo-pnd'] },
                 { label: 'O. Desarrollo Sostenible', icon: 'pi pi-fw pi-chart-scatter', routerLink: ['/objetivo-estrategico/objetivo-ds'] },
-                { label: 'Alineaciones', icon: 'pi pi-fw pi-book', routerLink: ['/objetivo-estrategico/alineacion'] },
+                { label: 'Alineaciones', icon: 'pi pi-fw pi-book', routerLink: ['/objetivo-estrategico/alineacion'] }
             ]
-        },{
-          label: 'Proyectos de Inversión'  ,
-          items:[
-            {label: 'Tipologías de intervencion', icon: 'pi pi-fw pi-cog', routerLink: ['/proyecto-inversion/tipologia']},
-          ]
+        },
+        {
+            label: 'Proyectos de Inversión',
+            items: [
+                { label: 'Tipologías de intervencion', icon: 'pi pi-fw pi-tag', routerLink: ['/proyecto-inversion/tipologia'] },
+                { label: 'Actividades', icon: 'pi pi-fw pi-tag', routerLink: ['/proyecto-inversion/actividad'] },
+                { label: 'Tipologías - Actividades', icon: 'pi pi-fw pi-tags', routerLink: ['/proyecto-inversion/tipologia-actividad'] }
+            ]
+        },
+        {
+            label: 'Reportes y  Visualización',
+            items: [{ label: 'Configuración Institucional', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/configuracion-institucional'] }]
         }
     ]
 };
@@ -55,23 +62,22 @@ const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
     standalone: true,
     imports: [CommonModule, AppMenuitem, RouterModule, SkeletonModule],
     template: `
-    @if(loading) {
-        <p-skeleton width="5rem" styleClass="mb-2 mt-4" />
-        <p-skeleton styleClass="mb-2 mt-4" height="2rem" />
-        <p-skeleton width="5rem" styleClass="mb-2 mt-4" />
-        <p-skeleton styleClass="mb-2 mt-4" height="2rem" />
-        <p-skeleton styleClass="mb-2 mt-4" height="2rem" />
-        <p-skeleton styleClass="mb-2 mt-4" height="2rem" />
-        <p-skeleton styleClass="mb-2 mt-4" height="2rem" />
-    }
-    @else {
-        <ul class="layout-menu">
-            <ng-container *ngFor="let item of model; let i = index">
-                <li app-menuitem *ngIf="!item.separator" [item]="item" [index]="i" [root]="true"></li>
-                <li *ngIf="item.separator" class="menu-separator"></li>
-            </ng-container>
-        </ul>
-    }
+        @if (loading) {
+            <p-skeleton width="5rem" styleClass="mb-2 mt-4" />
+            <p-skeleton styleClass="mb-2 mt-4" height="2rem" />
+            <p-skeleton width="5rem" styleClass="mb-2 mt-4" />
+            <p-skeleton styleClass="mb-2 mt-4" height="2rem" />
+            <p-skeleton styleClass="mb-2 mt-4" height="2rem" />
+            <p-skeleton styleClass="mb-2 mt-4" height="2rem" />
+            <p-skeleton styleClass="mb-2 mt-4" height="2rem" />
+        } @else {
+            <ul class="layout-menu">
+                <ng-container *ngFor="let item of model; let i = index">
+                    <li app-menuitem *ngIf="!item.separator" [item]="item" [index]="i" [root]="true"></li>
+                    <li *ngIf="item.separator" class="menu-separator"></li>
+                </ng-container>
+            </ul>
+        }
     `
 })
 export class AppMenu {

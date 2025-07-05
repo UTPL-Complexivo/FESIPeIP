@@ -18,6 +18,7 @@ export const appRoutes: Routes = [
             { path: 'configuracion-institucional', loadChildren: () => import('./app/pages/Configuracion-Institucional/configuracion-institucional.routes'), data: { expectedRoles: ['Planificador'] }, canActivate: [AuthRoleGuard] },
             { path: 'objetivo-estrategico', loadChildren: () => import('./app/pages/Objetivo-Estrategico/objetivo-estrategico.routes'), data: { expectedRoles: ['Planificador'] }, canActivate: [AuthRoleGuard] },
             { path: 'proyecto-inversion', loadChildren: () => import('./app/pages/Proyecto-Inversion/proyecto-inversion.route'), data: { expectedRoles: ['Planificador'] }, canActivate: [AuthRoleGuard] },
+            { path: 'reportes', loadChildren: () => import('./app/pages/Reportes-Visualizacion/reportes-visualizacion.route'), data: { expectedRoles: ['Planificador', 'Administrador'] }, canActivate: [AuthRoleGuard] },
         ]
     },
     { path: 'notfound', component: Notfound },
