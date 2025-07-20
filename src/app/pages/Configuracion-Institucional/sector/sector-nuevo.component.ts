@@ -13,6 +13,7 @@ import { MacroSectorModel } from '../../../models/macro-sector.model';
 import { SelectModule } from 'primeng/select';
 import { SectorService } from '../../../service/sector.service';
 import { ActiveFilterPipe } from '../../../pipes/active-filter.pipe';
+import { EstadoConfiguracionInstitucional } from '../../../shared/enums/estado-configuracion-institucional.enum';
 
 @Component({
     selector: 'app-sector-nuevo',
@@ -89,7 +90,7 @@ export class SectorNuevoComponent implements OnInit {
         this.initializeUserForm();
         this.macroSectorService.getMacroSectores().subscribe({
             next: (data) => {
-                this.macroSectores = data.filter((macroSector) => macroSector.estado === 'Activo');
+                this.macroSectores = data
             },
             error: (error) => {
                 console.error('Error al obtener los macro sectores:', error);

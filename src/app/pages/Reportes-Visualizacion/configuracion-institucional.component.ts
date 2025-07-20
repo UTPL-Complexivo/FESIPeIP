@@ -22,6 +22,7 @@ import { MacroSectorModel } from '../../models/macro-sector.model';
 import { SectorModel } from '../../models/sector.model';
 import { SubSectorModel } from '../../models/sub-sector.model';
 import { InstitucionModel } from '../../models/institucion.model';
+import { EstadoConfiguracionInstitucional } from '../../shared/enums/estado-configuracion-institucional.enum';
 
 @Component({
     selector: 'app-configuracion-institucional',
@@ -274,7 +275,7 @@ export class ConfiguracionInstitucionalComponent implements OnInit {
     cargarMacroSectores() {
         this.macroSectorService.getMacroSectores().subscribe({
             next: (data) => {
-                this.macroSectores = data.filter((ms) => ms.estado === 'Activo');
+                this.macroSectores = data.filter((ms) => ms.estado === EstadoConfiguracionInstitucional.Activo);
             },
             error: (error) => {
                 console.error('Error al cargar macro sectores:', error);
@@ -290,7 +291,7 @@ export class ConfiguracionInstitucionalComponent implements OnInit {
     cargarSectores(macroSectorId: number) {
         this.sectorService.getSectoresByMacroSectorId(macroSectorId).subscribe({
             next: (data) => {
-                this.sectores = data.filter((s) => s.estado === 'Activo');
+                this.sectores = data;
             },
             error: (error) => {
                 console.error('Error al cargar sectores:', error);
@@ -306,7 +307,7 @@ export class ConfiguracionInstitucionalComponent implements OnInit {
     cargarSubsectores(sectorId: number) {
         this.subSectorService.getSubsectores().subscribe({
             next: (data) => {
-                this.subsectores = data.filter((ss) => ss.estado === 'Activo' && ss.sectorId === sectorId);
+                this.subsectores = data.filter((ss) => ss.estado === EstadoConfiguracionInstitucional.Activo && ss.sectorId === sectorId);
             },
             error: (error) => {
                 console.error('Error al cargar subsectores:', error);
@@ -322,7 +323,7 @@ export class ConfiguracionInstitucionalComponent implements OnInit {
     cargarInstituciones(subsectorId: number) {
         this.institucionService.getInstituciones().subscribe({
             next: (data) => {
-                this.instituciones = data.filter((i) => i.estado === 'Activo' && i.subsectorId === subsectorId);
+                this.instituciones = data.filter((i) => i.estado === EstadoConfiguracionInstitucional.Activo && i.subsectorId === subsectorId);
             },
             error: (error) => {
                 console.error('Error al cargar instituciones:', error);

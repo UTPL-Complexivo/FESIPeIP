@@ -9,17 +9,21 @@ import { EjeColorPipe } from '../../pipes/eje-color.pipe';
             <p-badge value="Activo" severity="success" badgeSize="large" />
         } @else if (estado === 'Inactivo') {
             <p-badge value="Inactivo" severity="danger" badgeSize="large" />
-        } @else if (isEjeEstrategico(estado)) {
+        }
+        @else if (estado === 'Pendiente') {
+            <p-badge value="Pendiente" severity="warn" badgeSize="large" />
+        }
+        @else if (isEjeEstrategico(estado)) {
             <span [class]="getEjeClasses(estado)">EJE {{estado}}</span>
         } @else {
             <p-badge [value]="estado" severity="info" badgeSize="large" />
-        } `,
+        }`,
     imports: [BadgeModule],
     providers: []
 })
 export class AppEstadoGeneral {
     @Input({ required: true }) estado: string = '';
-    
+
     private ejesEstrategicos = [
         'Social',
         'Desarrollo Económico',

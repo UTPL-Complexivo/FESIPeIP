@@ -10,6 +10,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { ObjetivoInstitucionalModel } from '../../../models/objetivo-institucional.model';
 import { ActivatedRoute } from '@angular/router';
 import { ObjetivoInstitucionalService } from '../../../service/objetivo-institucional.service';
+import { EstadoObjetivosEstrategicos } from '../../../shared/enums/estado-objetivos-estrategicos.enum';
 
 @Component({
     selector: 'app-objetivo-institucional-editar',
@@ -78,6 +79,11 @@ export class ObjetivoInstitucionalEditarComponent implements OnInit {
         this.oiId = this.activateRoute.snapshot.params['id'];
         this.oiService.getObjetivoInstitucional(this.oiId).subscribe({
             next: (data: ObjetivoInstitucionalModel) => {
+                const {estado} = data;
+                if(estado === EstadoObjetivosEstrategicos.Rechazado){
+                    //Mostrar mensaje indicando que el objetivo institucional fue rechazado y se colocara en estado pendiente
+                    this.messageService.add({ severity: 'warn', summary: 'Advertencia', detail: 'El objetivo institucional fue rechazado y se colocara en estado pendiente una vez guarde la información.' });
+                }
                 this.formObjetivoInstitucional.patchValue(data);
             },
             error: (error) => {
@@ -92,7 +98,7 @@ export class ObjetivoInstitucionalEditarComponent implements OnInit {
             codigo: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(10)]],
             nombre: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(255)]],
             descripcion: [''],
-            estado: ['Activo'],
+            estado: [null],
         });
 
     }
@@ -101,7 +107,6 @@ export class ObjetivoInstitucionalEditarComponent implements OnInit {
             this.formObjetivoInstitucional.markAllAsTouched();
             return;
         }
-
         this.grabando = true;
         this.oiService.updateObjetivoInstitucional(this.oiId, this.formObjetivoInstitucional.value).subscribe({
             next: (response) => {

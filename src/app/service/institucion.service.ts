@@ -20,12 +20,12 @@ export class InstitucionService {
     }
 
     addInstitucion(institucion: InstitucionModel): Observable<RespuestaModel> {
-        console.log('Adding institution:', institucion);
+
         return this.http.post<RespuestaModel>(this.apiUrl, institucion);
     }
 
     updateInstitucion(id: number, institucion: InstitucionModel): Observable<RespuestaModel> {
-        console.log('Updating institution:', institucion);
+
         return this.http.put<RespuestaModel>(`${this.apiUrl}/${id}`, institucion);
     }
 

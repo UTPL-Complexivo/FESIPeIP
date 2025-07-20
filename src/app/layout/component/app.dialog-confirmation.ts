@@ -24,7 +24,7 @@ import { TextareaModule } from 'primeng/textarea';
 export class AppDialogConfirmation {
     @Input({ required: true }) tituloMotivo: string = '';
     @Input({ required: true }) displayMotivoDialog: boolean = false;
-    @Input({ required: true }) inactivar: boolean = false;
+    @Input({ required: true }) inactivar: any = false;
     @Input({ required: true }) id: any = false;
     @Output() save: EventEmitter<any> = new EventEmitter<any>();
     @Output() cerrarDialogo: EventEmitter<boolean> = new EventEmitter<boolean>();

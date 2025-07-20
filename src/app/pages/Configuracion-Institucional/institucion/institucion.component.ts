@@ -6,12 +6,13 @@ import { InstitucionModel } from '../../../models/institucion.model';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { RouterModule } from '@angular/router';
-import { AppEstadoGeneral } from '../../../layout/component/app.estado-general';
 import { ToastModule } from 'primeng/toast';
 import { AppDialogConfirmation } from '../../../layout/component/app.dialog-confirmation';
 import { InstitucionService } from '../../../service/institucion.service';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
+import { EstadoConfiguracionInstitucional } from '../../../shared/enums/estado-configuracion-institucional.enum';
+import { AppEstadoCi } from "../../../layout/component/app.estado-ci";
 
 @Component({
     selector: 'app-institucion',
@@ -27,7 +28,7 @@ import { ButtonModule } from 'primeng/button';
                 [rows]="5"
                 [rowsPerPageOptions]="[5, 10, 20, 50, 100]"
                 [responsiveLayout]="'scroll'"
-                [globalFilterFields]="['nombre', 'codigo', 'nombreMacroSector', 'nombreSector', 'estado']"
+                [globalFilterFields]="['nombre', 'codigo', 'nombreMacroSector', 'nombreSector', 'estado', 'nombreSubsector']"
             >
                 <ng-template #caption>
                     <div class="flex justify-between items-center flex-column sm:flex-row">
@@ -103,12 +104,12 @@ import { ButtonModule } from 'primeng/button';
                     <tr>
                         <td>
                             <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text" [routerLink]="['/configuracion-institucional/instituciones/editar', institucion.id]" pTooltip="Editar" tooltipPosition="top"></button>
-                            @if (institucion.estado === 'Activo') {
+                            @if (institucion.estado === EstadoConfiguracionInstitucional.Activo) {
                                 <button pButton icon="pi pi-lock" class="p-button-rounded p-button-text" (click)="updateEstado(institucion.id)" pTooltip="Inactivar" tooltipPosition="top"></button>
                             } @else {
                                 <button pButton icon="pi pi-unlock" severity="warn" class="p-button-rounded p-button-text" (click)="updateEstado(institucion.id)" pTooltip="Activar" tooltipPosition="top"></button>
                             }
-                            <button pButton icon="pi pi-trash" severity="danger" class="p-button-rounded p-button-text" (click)="deleteUsuario(institucion.id)" pTooltip="Eliminar" tooltipPosition="top"></button>
+                            <button pButton icon="pi pi-trash" severity="danger" class="p-button-rounded p-button-text" (click)="deleteItem(institucion.id)" pTooltip="Eliminar" tooltipPosition="top"></button>
                         </td>
                         <td>{{ institucion.codigo }}</td>
                         <td>{{ institucion.nombre }}</td>
@@ -116,7 +117,7 @@ import { ButtonModule } from 'primeng/button';
                         <td>{{ institucion.nombreSector }}</td>
                         <td>{{ institucion.nombreSubsector }}</td>
                         <td>
-                            <app-estado-general [estado]="institucion.estado"></app-estado-general>
+                            <app-estado-ci [estado]="institucion.estado"></app-estado-ci>
                         </td>
                     </tr>
                 </ng-template>
@@ -134,7 +135,7 @@ import { ButtonModule } from 'primeng/button';
         </div>
         <p-toast position="top-right"></p-toast>
         <app-dialog-confirmation [displayMotivoDialog]="displayMotivoDialog" [inactivar]="inactivar" [tituloMotivo]="tituloMotivo" [id]="idAEliminar" (cerrarDialogo)="dialogo($event)" (save)="confirmarEliminacion($event)"></app-dialog-confirmation>`,
-    imports: [AppCabeceraPrincipal, TableModule, IconFieldModule, InputIconModule, RouterModule, AppEstadoGeneral, ToastModule, AppDialogConfirmation, InputTextModule, ButtonModule],
+    imports: [AppCabeceraPrincipal, TableModule, IconFieldModule, InputIconModule, RouterModule, ToastModule, AppDialogConfirmation, InputTextModule, ButtonModule, AppEstadoCi],
     providers: [MessageService]
 })
 export class InstitucionComponent implements OnInit {
@@ -146,6 +147,7 @@ export class InstitucionComponent implements OnInit {
     inactivar: boolean = false;
     tituloMotivo: string = '';
     idAEliminar: number = 0;
+    EstadoConfiguracionInstitucional = EstadoConfiguracionInstitucional;
     constructor(
         private institucionService: InstitucionService,
         private messageService: MessageService
@@ -176,7 +178,7 @@ export class InstitucionComponent implements OnInit {
         table.clear();
         this.filter.nativeElement.value = '';
     }
-    deleteUsuario(id: number) {
+    deleteItem(id: number) {
         this.idAEliminar = id;
         this.inactivar = false;
         this.tituloMotivo = 'Eliminar Institución';
@@ -185,7 +187,7 @@ export class InstitucionComponent implements OnInit {
     updateEstado(id: number) {
         //verificar si la institución está activa o inactiva
         const institucion = this.instituciones.find((i) => i.id === id);
-        if (institucion && institucion.estado === 'Activo') {
+        if (institucion && institucion.estado === EstadoConfiguracionInstitucional.Activo) {
             this.idAEliminar = id;
             this.inactivar = true;
             this.tituloMotivo = 'Inactivar Institución';
@@ -235,7 +237,7 @@ export class InstitucionComponent implements OnInit {
                 this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
                 const institucion = this.instituciones.find((i) => i.id === this.idAEliminar);
                 if (institucion) {
-                    institucion.estado = institucion.estado === 'Activo' ? 'Inactivo' : 'Activo';
+                    institucion.estado = institucion.estado === EstadoConfiguracionInstitucional.Activo ? EstadoConfiguracionInstitucional.Inactivo : EstadoConfiguracionInstitucional.Activo;
                 }
                 this.limpiarCamposEditarEliminar();
             },

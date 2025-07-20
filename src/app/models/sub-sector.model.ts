@@ -1,3 +1,5 @@
+import { EstadoConfiguracionInstitucional } from "../shared/enums/estado-configuracion-institucional.enum";
+
 export interface SubSectorModel {
     id: number;
     codigo: string;
@@ -6,5 +8,5 @@ export interface SubSectorModel {
     nombreMacroSector: string;
     sectorId: number;
     nombreSector: string;
-    estado: string;
+    estado: EstadoConfiguracionInstitucional;
 }

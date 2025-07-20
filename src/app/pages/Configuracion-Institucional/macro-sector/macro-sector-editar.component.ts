@@ -142,7 +142,6 @@ export class MacroSectorEditarComponent implements OnInit {
                 this.grabando = false;
             },
             complete: () => {
-                console.log('Proceso de actualización completado.');
                 this.grabando = false;
             }
         });

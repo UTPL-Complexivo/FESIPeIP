@@ -245,7 +245,7 @@ export class InstitucionNuevoComponent implements OnInit {
     initializeUserForm() {
         this.institucionForm = this.fb.group({
             subSectorId: ['', [Validators.required]],
-            codigo: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(20)]],
+            codigo: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(20)]],
             nombre: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(255)]],
             macroSectorNombre: [{ value: '', disabled: true }, [Validators.required]],
             sectorNombre: [{ value: '', disabled: true }, [Validators.required]],

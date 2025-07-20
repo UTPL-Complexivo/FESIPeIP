@@ -186,7 +186,7 @@ export class InstitucionEditarComponent implements OnInit {
     grabando: boolean = false;
     catalogos: CatalogoModel[] = [];
     visible: boolean = false;
-    filters: string[] = [];
+    filters: string[] = ['codigo', 'nombre', 'nombreMacroSector', 'nombreSector'];
     titulo: string = 'Editar Institución';
     headers: HeaderTableModel[] = [
         { id: 'codigo', label: 'Código', type: 'text' },
@@ -285,7 +285,7 @@ export class InstitucionEditarComponent implements OnInit {
         this.institucionForm = this.fb.group({
             id: [{ value: '', disabled: true }, [Validators.required]],
             subSectorId: ['', [Validators.required]],
-            codigo: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(20)]],
+            codigo: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(20)]],
             nombre: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(255)]],
             macroSectorNombre: [{ value: '', disabled: true }, [Validators.required]],
             sectorNombre: [{ value: '', disabled: true }, [Validators.required]],

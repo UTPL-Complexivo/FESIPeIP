@@ -1,3 +1,5 @@
+import { EstadoObjetivosEstrategicos } from "../shared/enums/estado-objetivos-estrategicos.enum";
+
 export interface AlineacionModel {
     id: number;
     objetivoDesarrolloSostenibleId: number;
@@ -7,4 +9,6 @@ export interface AlineacionModel {
     iconoODS: string;
     nombreOI: string;
     nombrePND: string;
+    estado: EstadoObjetivosEstrategicos;
+    nombreEstado: string;
 }

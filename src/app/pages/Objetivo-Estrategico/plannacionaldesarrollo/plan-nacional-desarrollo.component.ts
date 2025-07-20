@@ -15,6 +15,10 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { DeleteModel } from '../../../models/delete.model';
 import { EjeColorPipe } from '../../../pipes/eje-color.pipe';
+import { EstadoObjetivosEstrategicos } from '../../../shared/enums/estado-objetivos-estrategicos.enum';
+import { AppEstadoOe } from '../../../layout/component/app.estado-oe';
+import { EstadoConfiguracionInstitucional } from '../../../shared/enums/estado-configuracion-institucional.enum';
+import { AppEstadoCi } from '../../../layout/component/app.estado-ci';
 
 @Component({
     selector: 'app-plan-nacional-desarrollo',
@@ -81,11 +85,9 @@ import { EjeColorPipe } from '../../../pipes/eje-color.pipe';
                 <ng-template #groupheader let-objetivo_pnd>
                     <tr pRowGroupHeader>
                         <th colspan="6" class="text-left">
-                            <div class="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-l-4" [style.border-left-color]="objetivo_pnd.eje | ejeColor:'hex'">
-                                <div class="w-4 h-4 rounded-full" [style.background-color]="objetivo_pnd.eje | ejeColor:'hex'"></div>
-                                <span [class]="'px-2 py-1 rounded text-white text-sm font-semibold ' + (objetivo_pnd.eje | ejeColor:'background')">
-                                    EJE {{ objetivo_pnd.eje }}
-                                </span>
+                            <div class="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-l-4" [style.border-left-color]="objetivo_pnd.eje | ejeColor: 'hex'">
+                                <div class="w-4 h-4 rounded-full" [style.background-color]="objetivo_pnd.eje | ejeColor: 'hex'"></div>
+                                <span [class]="'px-2 py-1 rounded text-white text-sm font-semibold ' + (objetivo_pnd.eje | ejeColor: 'background')"> EJE {{ objetivo_pnd.eje }} </span>
                             </div>
                         </th>
                     </tr>
@@ -94,7 +96,7 @@ import { EjeColorPipe } from '../../../pipes/eje-color.pipe';
                     <tr>
                         <td>
                             <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text" [routerLink]="['/objetivo-estrategico/objetivo-pnd/editar', objetivo_pnd.id]" pTooltip="Editar" tooltipPosition="top"></button>
-                            @if (objetivo_pnd.estado === 'Activo') {
+                            @if (objetivo_pnd.estado === EstadoConfiguracionInstitucional.Activo) {
                                 <button pButton icon="pi pi-lock" class="p-button-rounded p-button-text" (click)="updateEstado(objetivo_pnd)" pTooltip="Inactivar" tooltipPosition="top"></button>
                             } @else {
                                 <button pButton icon="pi pi-unlock" severity="warn" class="p-button-rounded p-button-text" (click)="updateEstado(objetivo_pnd)" pTooltip="Activar" tooltipPosition="top"></button>
@@ -105,7 +107,7 @@ import { EjeColorPipe } from '../../../pipes/eje-color.pipe';
                         <td>{{ objetivo_pnd.codigo }}</td>
                         <td>{{ objetivo_pnd.nombre }}</td>
                         <td>
-                            <app-estado-general [estado]="objetivo_pnd.estado"></app-estado-general>
+                            <app-estado-ci [estado]="objetivo_pnd.estado"></app-estado-ci>
                         </td>
                     </tr>
                 </ng-template>
@@ -124,7 +126,7 @@ import { EjeColorPipe } from '../../../pipes/eje-color.pipe';
         <p-toast position="top-right"></p-toast>
         <app-dialog-confirmation [displayMotivoDialog]="displayMotivoDialog" [inactivar]="inactivar" [tituloMotivo]="tituloMotivo" [id]="idAEliminar" (cerrarDialogo)="dialogo($event)" (save)="confirmarEliminacion($event)"></app-dialog-confirmation>
     `,
-    imports: [AppCabeceraPrincipal, TableModule, IconFieldModule, InputIconModule, RouterModule, AppEstadoGeneral, ToastModule, AppDialogConfirmation, ButtonModule, InputTextModule, EjeColorPipe],
+    imports: [AppCabeceraPrincipal, TableModule, IconFieldModule, InputIconModule, RouterModule, ToastModule, AppDialogConfirmation, ButtonModule, InputTextModule, EjeColorPipe, AppEstadoCi],
     providers: [MessageService]
 })
 export class PlanNacionalDesarrolloComponent implements OnInit {
@@ -136,7 +138,7 @@ export class PlanNacionalDesarrolloComponent implements OnInit {
     inactivar: boolean = false;
     tituloMotivo: string = '';
     idAEliminar: number = 0;
-
+    EstadoConfiguracionInstitucional = EstadoConfiguracionInstitucional;
     constructor(
         private messageService: MessageService,
         private pndService: PlanNacionalDesarrolloService
@@ -172,31 +174,13 @@ export class PlanNacionalDesarrolloComponent implements OnInit {
     }
     updateEstado(pnd: PlanNacionalDesarrolloModel) {
         this.idAEliminar = pnd.id;
-        if (pnd.estado === 'Activo') {
+        if (pnd.estado === EstadoConfiguracionInstitucional.Activo) {
             this.displayMotivoDialog = true;
             this.inactivar = true;
             this.tituloMotivo = 'Motivo de Inactivación';
             return;
         }
-        this.loading = true;
-        this.pndService.patchPlanNacionalDesarrolloEstado(pnd.id, { id: pnd.id, motivoInactivacion: 'activado desde el sistema' }).subscribe({
-            next: (response) => {
-                const { error, mensaje } = response;
-                if (error) {
-                    this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
-                } else {
-                    this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
-                    pnd.estado = pnd.estado === 'Activo' ? 'Inactivo' : 'Activo';
-                }
-            },
-            error: (error) => {
-                console.error('Error al actualizar el estado del PND:', error);
-                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el estado del PND.' });
-            },
-            complete: () => {
-                this.loading = false;
-            }
-        });
+        this.updatePNDState(pnd, { id: pnd.id, motivoInactivacion: 'activado desde el sistema' });
     }
     dialogo($event: boolean) {
         this.displayMotivoDialog = $event;
@@ -207,29 +191,9 @@ export class PlanNacionalDesarrolloComponent implements OnInit {
         let deletePND: DeleteModel = {
             id: this.idAEliminar,
             motivoInactivacion: $event.motivoInactivacion || 'Eliminado desde el sistema'
-        }
+        };
         if (inactivar) {
-            if (pnd) pnd.estado = pnd?.estado === 'Activo' ? 'Inactivo' : 'Activo';
-            this.loading = true;
-            this.pndService.patchPlanNacionalDesarrolloEstado(this.idAEliminar, deletePND).subscribe({
-                next: (response) => {
-                    const { error, mensaje } = response;
-                    if (error) {
-                        this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
-                    } else {
-                        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
-                    }
-                },
-                error: (error) => {
-                    console.error('Error al actualizar el estado del PND:', error);
-                    if (pnd) pnd.estado = pnd.estado === 'Activo' ? 'Inactivo' : 'Activo';
-                    this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el estado del PND.' });
-                    this.loading = false;
-                },
-                complete: () => {
-                    this.loading = false;
-                }
-            });
+            this.updatePNDState(pnd, deletePND);
             return;
         }
         this.pndService.deletePlanNacionalDesarrollo(id, deletePND).subscribe({
@@ -248,6 +212,29 @@ export class PlanNacionalDesarrolloComponent implements OnInit {
             },
             complete: () => {
                 this.displayMotivoDialog = false;
+                this.loading = false;
+            }
+        });
+    }
+
+    private updatePNDState(pnd: PlanNacionalDesarrolloModel | undefined, deletePND: DeleteModel) {
+        this.loading = true;
+        this.pndService.patchPlanNacionalDesarrolloEstado(this.idAEliminar, deletePND).subscribe({
+            next: (response) => {
+                const { error, mensaje } = response;
+                if (error) {
+                    this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
+                } else {
+                    if (pnd) pnd.estado = pnd?.estado === EstadoConfiguracionInstitucional.Activo ? EstadoConfiguracionInstitucional.Inactivo : EstadoConfiguracionInstitucional.Activo;
+                    this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
+                }
+            },
+            error: (error) => {
+                console.error('Error al actualizar el estado del PND:', error);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el estado del PND.' });
+                this.loading = false;
+            },
+            complete: () => {
                 this.loading = false;
             }
         });

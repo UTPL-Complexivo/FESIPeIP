@@ -6,12 +6,13 @@ import { SubSectorModel } from '../../../models/sub-sector.model';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { RouterModule } from '@angular/router';
-import { AppEstadoGeneral } from '../../../layout/component/app.estado-general';
 import { ToastModule } from 'primeng/toast';
 import { AppDialogConfirmation } from '../../../layout/component/app.dialog-confirmation';
 import { SubSectorService } from '../../../service/sub-sector.service';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
+import { AppEstadoCi } from "../../../layout/component/app.estado-ci";
+import { EstadoConfiguracionInstitucional } from '../../../shared/enums/estado-configuracion-institucional.enum';
 
 @Component({
     selector: 'app-subsector',
@@ -94,7 +95,7 @@ import { ButtonModule } from 'primeng/button';
                     <tr>
                         <td>
                             <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text" [routerLink]="['/configuracion-institucional/sub-sectores/editar', sub_sector.id]" pTooltip="Editar" tooltipPosition="top"></button>
-                            @if (sub_sector.estado === 'Activo') {
+                            @if (sub_sector.estado === EstadoConfiguracionInstitucional.Activo) {
                                 <button pButton icon="pi pi-lock" class="p-button-rounded p-button-text" (click)="updateEstado(sub_sector.id)" pTooltip="Inactivar" tooltipPosition="top"></button>
                             } @else {
                                 <button pButton icon="pi pi-unlock" severity="warn" class="p-button-rounded p-button-text" (click)="updateEstado(sub_sector.id)" pTooltip="Activar" tooltipPosition="top"></button>
@@ -106,7 +107,7 @@ import { ButtonModule } from 'primeng/button';
                         <td>{{ sub_sector.nombreMacroSector }}</td>
                         <td>{{ sub_sector.nombreSector }}</td>
                         <td>
-                            <app-estado-general [estado]="sub_sector.estado"></app-estado-general>
+                            <app-estado-ci [estado]="sub_sector.estado"></app-estado-ci>
                         </td>
                     </tr>
                 </ng-template>
@@ -124,7 +125,7 @@ import { ButtonModule } from 'primeng/button';
         </div>
         <p-toast position="top-right"></p-toast>
         <app-dialog-confirmation [displayMotivoDialog]="displayMotivoDialog" [inactivar]="inactivar" [tituloMotivo]="tituloMotivo" [id]="idAEliminar" (cerrarDialogo)="dialogo($event)" (save)="confirmarEliminacion($event)"></app-dialog-confirmation>`,
-    imports: [AppCabeceraPrincipal, TableModule, IconFieldModule, InputIconModule, RouterModule, AppEstadoGeneral, ToastModule, AppDialogConfirmation, InputTextModule, ButtonModule],
+    imports: [AppCabeceraPrincipal, TableModule, IconFieldModule, InputIconModule, RouterModule, ToastModule, AppDialogConfirmation, InputTextModule, ButtonModule, AppEstadoCi],
     providers: [MessageService]
 })
 export class SubsectorComponent implements OnInit {
@@ -136,12 +137,12 @@ export class SubsectorComponent implements OnInit {
     inactivar: boolean = false;
     tituloMotivo: string = '';
     idAEliminar: number | null = null;
-
+    EstadoConfiguracionInstitucional = EstadoConfiguracionInstitucional;
     constructor(
         private subSectorService: SubSectorService,
         private messageService: MessageService
     ) {
-        console.log('SubsectorComponent initialized');
+
     }
 
     ngOnInit() {
@@ -179,61 +180,25 @@ export class SubsectorComponent implements OnInit {
     }
     updateEstado(id: number) {
         const subsector = this.sub_sectores.find((s) => s.id === id);
-        if (subsector?.estado === 'Activo') {
+        this.idAEliminar = id;
+        if (subsector?.estado === EstadoConfiguracionInstitucional.Activo) {
             this.displayMotivoDialog = true;
             this.inactivar = true;
             this.tituloMotivo = 'Motivo de Inactivación';
-            this.idAEliminar = id;
             return;
         }
         this.loading = true;
-        this.subSectorService.patchSubSectorEstado(id, { id, motivoInactivacion: 'actualizado desde sistema' }).subscribe({
-            next: (response) => {
-                const { error, mensaje } = response;
-                if (error) {
-                    this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
-                    return;
-                }
-                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
-                subsector!.estado = subsector!.estado === 'Activo' ? 'Inactivo' : 'Activo';
-            },
-            error: (error) => {
-                console.error('Error updating estado:', error);
-                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el estado.' });
-                this.loading = false;
-            },
-            complete: () => {
-                this.loading = false;
-            }
-        });
+        const log = {
+            id,
+            motivoInactivacion: 'actualizado desde sistema'
+        }
+        this.updateSubSectorStatus(log);
     }
     confirmarEliminacion($event: any) {
         const { inactivar } = $event;
         this.loading = true;
         if (inactivar) {
-            this.subSectorService.patchSubSectorEstado(this.idAEliminar!, $event).subscribe({
-                next: (response) => {
-                    const { error, mensaje } = response;
-                    if (error) {
-                        this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
-                        return;
-                    }
-                    this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
-                    const subsector = this.sub_sectores.find((s) => s.id === this.idAEliminar);
-                    if (subsector) {
-                        subsector.estado = subsector.estado === 'Activo' ? 'Inactivo' : 'Activo';
-                    }
-                },
-                error: (error) => {
-                    console.error('Error updating estado:', error);
-                    this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el estado.' });
-                    this.loading = false;
-                },
-                complete: () => {
-                    this.displayMotivoDialog = false;
-                    this.loading = false;
-                }
-            });
+            this.updateSubSectorStatus($event);
             return;
         }
 
@@ -258,6 +223,39 @@ export class SubsectorComponent implements OnInit {
             }
         });
     }
+    private updateSubSectorStatus($event: any) {
+        this.subSectorService.patchSubSectorEstado(this.idAEliminar!, $event).subscribe({
+            next: (response) => {
+                const { error, mensaje } = response;
+                if (error) {
+                    this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
+                    return;
+                }
+                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
+                const subsector = this.sub_sectores.find((s) => s.id === this.idAEliminar);
+                if (subsector) {
+                    subsector.estado = subsector.estado === EstadoConfiguracionInstitucional.Activo ? EstadoConfiguracionInstitucional.Inactivo : EstadoConfiguracionInstitucional.Activo;
+                }
+                this.cleanUpdate();
+            },
+            error: (error) => {
+                console.error('Error updating estado:', error);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el estado.' });
+                this.loading = false;
+            },
+            complete: () => {
+                this.loading = false;
+            }
+        });
+    }
+
+    cleanUpdate(){
+        this.displayMotivoDialog = false;
+        this.idAEliminar = null;
+        this.inactivar = false;
+        this.tituloMotivo = '';
+    }
+
     dialogo($event: boolean) {
         this.displayMotivoDialog = $event;
     }

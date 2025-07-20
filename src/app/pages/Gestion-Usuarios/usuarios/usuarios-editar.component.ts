@@ -243,7 +243,6 @@ export class UsuariosEditarComponent implements OnInit {
     onSubmit() {
         if (this.usuarioForm.invalid) {
             this.usuarioForm.markAllAsTouched();
-            console.log('Form submitted:', this.usuarioForm.value);
             return;
         }
         this.grabando = true;
@@ -276,6 +275,5 @@ export class UsuariosEditarComponent implements OnInit {
                 this.grabando = false;
             }
         });
-        console.log('Form submitted:', this.usuarioForm.value);
     }
 }

@@ -19,6 +19,8 @@ import { FloatLabelModule } from 'primeng/floatlabel';
 import { AppCabeceraPrincipal } from '../../../layout/component/app.cabecera-principal';
 import { AppDialogConfirmation } from '../../../layout/component/app.dialog-confirmation';
 import { AppEstadoGeneral } from "../../../layout/component/app.estado-general";
+import { EstadoConfiguracionInstitucional } from '../../../shared/enums/estado-configuracion-institucional.enum';
+import { AppEstadoCi } from '../../../layout/component/app.estado-ci';
 
 @Component({
     selector: 'app-macro-sector',
@@ -83,7 +85,7 @@ import { AppEstadoGeneral } from "../../../layout/component/app.estado-general";
                     <tr>
                         <td>
                             <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text" [routerLink]="['/configuracion-institucional/macro-sectores/editar', macro_sector.id]" pTooltip="Editar" tooltipPosition="top"></button>
-                            @if (macro_sector.estado === 'Activo') {
+                            @if (macro_sector.estado === EstadoConfiguracionInstitucional.Activo) {
                                 <button pButton icon="pi pi-lock" class="p-button-rounded p-button-text" (click)="updateEstado(macro_sector.id)" pTooltip="Inactivar" tooltipPosition="top"></button>
                             } @else {
                                 <button pButton icon="pi pi-unlock" severity="warn" class="p-button-rounded p-button-text" (click)="updateEstado(macro_sector.id)" pTooltip="Activar" tooltipPosition="top"></button>
@@ -93,7 +95,7 @@ import { AppEstadoGeneral } from "../../../layout/component/app.estado-general";
                         <td>{{ macro_sector.codigo }}</td>
                         <td>{{ macro_sector.nombre }}</td>
                         <td>
-                            <app-estado-general [estado]="macro_sector.estado"></app-estado-general>
+                            <app-estado-ci [estado]="macro_sector.estado"></app-estado-ci>
                         </td>
                     </tr>
                 </ng-template>
@@ -127,12 +129,13 @@ import { AppEstadoGeneral } from "../../../layout/component/app.estado-general";
     FloatLabelModule,
     AppCabeceraPrincipal,
     AppDialogConfirmation,
-    AppEstadoGeneral
+    AppEstadoCi
 ],
     providers: [MessageService]
 })
 export class MacroSectorComponent implements OnInit {
     @ViewChild('filter') filter!: ElementRef;
+    EstadoConfiguracionInstitucional = EstadoConfiguracionInstitucional;
     items: MenuItem[] = [];
     macro_sectores: MacroSectorModel[] = [];
     loading: boolean = true;
@@ -181,29 +184,15 @@ export class MacroSectorComponent implements OnInit {
             return;
         }
         const macroSector = this.macro_sectores.find((ms) => ms.id === id);
-        if (macroSector?.estado === 'Activo') {
+        this.idAEliminar = id;
+        if (macroSector?.estado === EstadoConfiguracionInstitucional.Activo) {
             this.tituloMotivo = 'Motivo de inactivación';
             this.inactivar = true;
-            this.idAEliminar = id;
             this.displayMotivoDialog = true;
             return;
         }
 
-        this.macroSectorService.patchMacroSectorEstado(id, { id, motivoInactivacion: 'Activado desde plataforma' }).subscribe({
-            next: (response) => {
-                const { error, mensaje } = response;
-                if (error) {
-                    this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
-                    return;
-                }
-                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
-                this.getMacroSectores();
-            },
-            error: (error) => {
-                console.error('Error al actualizar el estado del macro sector:', error);
-                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el estado del macro sector.' });
-            }
-        });
+        this.updateMacroSectorStatus({ id: id, motivoInactivacion: 'Activado desde plataforma' });
     }
     onGlobalFilter(table: Table, event: Event) {
         table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
@@ -215,32 +204,12 @@ export class MacroSectorComponent implements OnInit {
     }
 
     confirmarEliminacion($event: any) {
-        const {inactivar, id, motivo} = $event;
+        const {inactivar} = $event;
         this.inactivar = inactivar;
         this.loading = true;
 
         if (this.inactivar) {
-            this.macroSectorService.patchMacroSectorEstado(this.idAEliminar!, $event).subscribe({
-                next: (response) => {
-                    const { error, mensaje } = response;
-                    if (error) {
-                        this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
-                        return;
-                    }
-                    this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
-                    this.getMacroSectores();
-                },
-                error: (error) => {
-                    console.error('Error al inactivar el macro sector:', error);
-                    this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo inactivar el macro sector.' });
-                    this.loading = false;
-                },
-                complete: () => {
-                    this.loading = false;
-                    this.displayMotivoDialog = false;
-                    this.idAEliminar = null;
-                }
-            });
+            this.updateMacroSectorStatus($event);
             return;
         }
 
@@ -257,6 +226,32 @@ export class MacroSectorComponent implements OnInit {
             error: (error) => {
                 console.error('Error al eliminar el macro sector:', error);
                 this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el macro sector.' });
+                this.loading = false;
+            },
+            complete: () => {
+                this.loading = false;
+                this.displayMotivoDialog = false;
+                this.idAEliminar = null;
+            }
+        });
+    }
+
+    private updateMacroSectorStatus($event: any) {
+        const {id} = $event;
+        const macro_sector = this.macro_sectores.find(ms => ms.id === id);
+        this.macroSectorService.patchMacroSectorEstado(this.idAEliminar!, $event).subscribe({
+            next: (response) => {
+                const { error, mensaje } = response;
+                if (error) {
+                    this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
+                    return;
+                }
+                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
+                macro_sector!.estado = macro_sector!.estado === EstadoConfiguracionInstitucional.Activo ? EstadoConfiguracionInstitucional.Inactivo : EstadoConfiguracionInstitucional.Activo;
+            },
+            error: (error) => {
+                console.error('Error al inactivar el macro sector:', error);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo inactivar el macro sector.' });
                 this.loading = false;
             },
             complete: () => {

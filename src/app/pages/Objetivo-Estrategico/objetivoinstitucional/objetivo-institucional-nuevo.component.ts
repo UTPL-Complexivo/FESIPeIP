@@ -82,7 +82,7 @@ export class ObjetivoInstitucionalNuevoComponent implements OnInit {
 
     onSubmit() {
         if (this.formObjetivoInstitucional.invalid) {
-            console.log('Formulario enviado:', this.formObjetivoInstitucional.value);
+
             this.formObjetivoInstitucional.markAllAsTouched(); // Marcar todos los campos como tocados para mostrar errores
             return;
         }
@@ -115,7 +115,7 @@ export class ObjetivoInstitucionalNuevoComponent implements OnInit {
             codigo: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(10)]],
             nombre: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(255)]],
             descripcion: [''],
-            estado: ['Activo']
+            estado: ['PendienteRevision']
         });
     }
 }

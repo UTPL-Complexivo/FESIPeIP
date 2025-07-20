@@ -55,6 +55,32 @@ const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
             label: 'Reportes y  Visualización',
             items: [{ label: 'Configuración Institucional', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/configuracion-institucional'] }]
         }
+    ],
+    revisor: [
+        {
+            label: 'Home',
+            items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/'] }]
+        },
+        {
+            label: 'Configuracion Institucional',
+            items: [
+                { label: 'Objetivos Institucionales', icon: 'pi pi-fw pi-bullseye', routerLink: ['/objetivo-estrategico/objetivo-institucional'] },
+                { label: 'Alineaciones', icon: 'pi pi-fw pi-book', routerLink: ['/objetivo-estrategico/alineacion'] }
+            ]
+        }
+    ],
+    autoridad: [
+        {
+            label: 'Home',
+            items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/'] }]
+        },
+        {
+            label: 'Configuracion Institucional',
+            items: [
+                { label: 'Objetivos Institucionales', icon: 'pi pi-fw pi-bullseye', routerLink: ['/objetivo-estrategico/objetivo-institucional'] },
+                { label: 'Alineaciones', icon: 'pi pi-fw pi-book', routerLink: ['/objetivo-estrategico/alineacion'] }
+            ]
+        }
     ]
 };
 @Component({

@@ -13,6 +13,7 @@ import { MacroSectorService } from '../../../service/macro-sector.service';
 import { SectorService } from '../../../service/sector.service';
 import { SubSectorService } from '../../../service/sub-sector.service';
 import { ActiveFilterPipe } from '../../../pipes/active-filter.pipe';
+import { EstadoConfiguracionInstitucional } from '../../../shared/enums/estado-configuracion-institucional.enum';
 
 @Component({
     selector: 'app-subsector-nuevo',
@@ -105,7 +106,7 @@ export class SubsectorNuevoComponent implements OnInit {
         this.items = [{ icon: 'pi pi-home', route: '/' }, { label: 'Configuracion Institucional' }, { label: 'Sub Sectores' }, { label: 'Nuevo', route: '/sub-sectores/nuevo' }];
         this.macroSectorService.getMacroSectores().subscribe({
             next: (data) => {
-                this.macroSectores = data.filter((macroSector) => macroSector.estado === 'Activo');
+                this.macroSectores = data;
             },
             error: (error) => {
                 console.error('Error loading macro sectors:', error);
@@ -158,7 +159,7 @@ export class SubsectorNuevoComponent implements OnInit {
             this.cargaSector = true;
             this.sectorSevice.getSectoresByMacroSectorId($event.value).subscribe({
                 next: (data) => {
-                    this.sectores = data.filter((sector) => sector.estado === 'Activo');
+                    this.sectores = data;
                     this.subsectorForm.get('sectorId')?.enable();
                 },
                 error: (error) => {

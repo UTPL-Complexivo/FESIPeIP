@@ -14,6 +14,8 @@ import { ButtonModule } from 'primeng/button';
 import { SelectControlValueAccessor } from '@angular/forms';
 import { SectorService } from '../../../service/sector.service';
 import { AppEstadoGeneral } from '../../../layout/component/app.estado-general';
+import { AppEstadoCi } from '../../../layout/component/app.estado-ci';
+import { EstadoConfiguracionInstitucional } from '../../../shared/enums/estado-configuracion-institucional.enum';
 
 @Component({
     selector: 'app-sector',
@@ -87,7 +89,7 @@ import { AppEstadoGeneral } from '../../../layout/component/app.estado-general';
                     <tr>
                         <td>
                             <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text" [routerLink]="['/configuracion-institucional/sectores/editar', sector.id]" pTooltip="Editar" tooltipPosition="top"></button>
-                            @if (sector.estado === 'Activo') {
+                            @if (sector.estado === EstadoConfiguracionInstitucional.Activo) {
                                 <button pButton icon="pi pi-lock" class="p-button-rounded p-button-text" (click)="updateEstado(sector.id)" pTooltip="Inactivar" tooltipPosition="top"></button>
                             } @else {
                                 <button pButton icon="pi pi-unlock" severity="warn" class="p-button-rounded p-button-text" (click)="updateEstado(sector.id)" pTooltip="Activar" tooltipPosition="top"></button>
@@ -98,7 +100,7 @@ import { AppEstadoGeneral } from '../../../layout/component/app.estado-general';
                         <td>{{ sector.nombre }}</td>
                         <td>{{ sector.nombreMacroSector }}</td>
                         <td>
-                            <app-estado-general [estado]="sector.estado"></app-estado-general>
+                            <app-estado-ci [estado]="sector.estado"></app-estado-ci>
                         </td>
                     </tr>
                 </ng-template>
@@ -116,7 +118,7 @@ import { AppEstadoGeneral } from '../../../layout/component/app.estado-general';
         </div>
         <p-toast position="top-right"></p-toast>
         <app-dialog-confirmation [displayMotivoDialog]="displayMotivoDialog" [inactivar]="inactivar" [tituloMotivo]="tituloMotivo" [id]="idAEliminar" (cerrarDialogo)="dialogo($event)" (save)="confirmarEliminacion($event)"></app-dialog-confirmation>`,
-    imports: [AppCabeceraPrincipal, TableModule, AppDialogConfirmation, IconFieldModule, InputIconModule, RouterModule, BadgeModule, ToastModule, InputTextModule, ButtonModule, AppEstadoGeneral],
+    imports: [AppCabeceraPrincipal, TableModule, AppDialogConfirmation, IconFieldModule, InputIconModule, RouterModule, BadgeModule, ToastModule, InputTextModule, ButtonModule, AppEstadoCi],
     providers: [MessageService]
 })
 export class SectorComponent implements OnInit {
@@ -128,7 +130,7 @@ export class SectorComponent implements OnInit {
     inactivar: boolean = false;
     tituloMotivo: string = '';
     idAEliminar: number | null = null;
-
+    EstadoConfiguracionInstitucional = EstadoConfiguracionInstitucional;
     constructor(
         private sectorService: SectorService,
         private messageService: MessageService
@@ -173,11 +175,11 @@ export class SectorComponent implements OnInit {
             console.error('Sector no encontrado:', id);
             return;
         }
-        if (sector.estado === 'Activo') {
+        this.idAEliminar = id;
+        if (sector.estado === EstadoConfiguracionInstitucional.Activo) {
             this.displayMotivoDialog = true;
             this.inactivar = true;
             this.tituloMotivo = 'Motivo de inactivación';
-            this.idAEliminar = id;
             return;
         }
         const dto = {
@@ -185,53 +187,12 @@ export class SectorComponent implements OnInit {
             motivoInactivacion: 'activación del sector'
         };
         this.loading = true;
-        this.sectorService.patchEstado(id, dto).subscribe({
-            next: (response) => {
-                const { error, mensaje } = response;
-                if (error) {
-                    console.error('Error al activar el sector:', mensaje);
-                    this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
-                    return;
-                }
-                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
-                this.getSectores();
-            },
-            error: (error) => {
-                console.error('Error al activar el sector:', error);
-                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo activar el sector.' });
-                this.loading = false;
-            },
-            complete: () => {
-                this.loading = false;
-            }
-        });
+        this.patchSectorStatus(dto);
     }
 
     confirmarEliminacion($event: any) {
-        console.log('Confirmar eliminación:', $event);
         if (this.inactivar) {
-            this.sectorService.patchEstado(this.idAEliminar!, $event).subscribe({
-                next: (response) => {
-                    const { error, mensaje } = response;
-                    if (error) {
-                        this.displayMotivoDialog = false;
-                        this.idAEliminar = null;
-                        this.inactivar = false;
-                        this.tituloMotivo = '';
-                        this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
-                        return;
-                    }
-                    this.displayMotivoDialog = false;
-                    this.idAEliminar = null;
-                    this.inactivar = false;
-                    this.tituloMotivo = '';
-                    this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
-                    this.getSectores();
-                },
-                error: (error) => {
-                    console.error('Error al inactivar el sector:', error);
-                }
-            });
+            this.patchSectorStatus($event);
             return;
         }
 
@@ -258,6 +219,36 @@ export class SectorComponent implements OnInit {
             }
         });
     }
+    private patchSectorStatus($event: any) {
+        const { id } = $event;
+        const sector = this.sectores.find((s) => s.id === id);
+        this.sectorService.patchEstado(this.idAEliminar!, $event).subscribe({
+            next: (response) => {
+                const { error, mensaje } = response;
+                if (error) {
+                    this.cleanEdit();
+                    this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
+                    return;
+                }
+                this.cleanEdit();
+                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
+                if (sector) sector.estado = sector.estado === EstadoConfiguracionInstitucional.Activo ? EstadoConfiguracionInstitucional.Inactivo : EstadoConfiguracionInstitucional.Activo;
+            },
+            error: (error) => {
+                console.error('Error al inactivar el sector:', error);
+            },complete: () => {
+                this.loading = false;
+            }
+        });
+    }
+
+    private cleanEdit() {
+        this.displayMotivoDialog = false;
+        this.idAEliminar = null;
+        this.inactivar = false;
+        this.tituloMotivo = '';
+    }
+
     dialogo($event: boolean) {
         this.displayMotivoDialog = $event;
     }

@@ -155,7 +155,6 @@ export class AlineacionComponent implements OnInit {
             objetivosDesarrolloSostenible: this.objetivoDesarrolloSostenibleService.getObjetivosDesarrolloSostenible()
         }).subscribe({
             next: (data) => {
-                console.log('Datos cargados:', data);
                 this.alineaciones = data.alineaciones;
                 this.planesNacionalesDesarrollo = data.planesNacionalesDesarrollo;
                 this.objetivosDesarrolloSostenible = data.objetivosDesarrolloSostenible;
@@ -195,8 +194,6 @@ export class AlineacionComponent implements OnInit {
             if (pndComparison !== 0) return pndComparison;
             return a.nombreOI.localeCompare(b.nombreOI);
         });
-
-        console.log('Alineaciones completas preparadas:', this.alineacionesCompletas);
     }
 
     onGlobalFilter(table: Table, event: Event) {
@@ -217,7 +214,7 @@ export class AlineacionComponent implements OnInit {
 
     updateEstado(alineacionId: number) {
         // Implementar lógica para cambiar estado si es necesario
-        console.log('Cambiar estado de alineación:', alineacionId);
+
     }
 
     confirmarEliminacion(evento: any) {
@@ -231,7 +228,7 @@ export class AlineacionComponent implements OnInit {
                         next: (alineaciones) => {
                             this.alineaciones = alineaciones;
                             this.prepararAlineacionesCompletas();
-                            console.log('Alineación eliminada correctamente');
+
                         }
                     });
                 },

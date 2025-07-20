@@ -14,6 +14,7 @@ import { ActivatedRoute } from '@angular/router';
 import { SectorService } from '../../../service/sector.service';
 import { SectorModel } from '../../../models/sector.model';
 import { ActiveFilterPipe } from '../../../pipes/active-filter.pipe';
+import { EstadoConfiguracionInstitucional } from '../../../shared/enums/estado-configuracion-institucional.enum';
 
 @Component({
     selector: 'app-sector-editar',
@@ -106,7 +107,7 @@ export class SectorEditarComponent implements OnInit {
         this.id = Number(this.activatedRoute.snapshot.paramMap.get('id'));
         this.macroSectorService.getMacroSectores().subscribe({
             next: (data) => {
-                this.macroSectores = data.filter((macroSector) => macroSector.estado === 'Activo');
+                this.macroSectores = data;
                 this.sectorService.getSectorById(this.id).subscribe({
                     next: (data) => {
                         this.sector = data;

@@ -11,7 +11,7 @@ export class ActiveFilterPipe implements PipeTransform {
         }
 
         // Filtrar elementos activos
-        const activeItems = items.filter(item => item.estado === 'Activo');
+        const activeItems = items.filter(item => item.estado === 0);
 
         // Si es para ODS, aplicar ordenamiento especial
         if (sortForODS) {

@@ -135,7 +135,7 @@ export class PlanNacionalDesarrolloEditarComponent implements OnInit {
     }
     onSubmit() {
         if (this.formPND.invalid) {
-            console.log('Formulario enviado:', this.formPND.value);
+
             this.formPND.markAllAsTouched();
             return;
         }

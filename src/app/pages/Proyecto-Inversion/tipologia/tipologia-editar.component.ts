@@ -99,19 +99,19 @@ export class TipologiaEditarComponent implements OnInit {
     nombre = '';
     tipologia!: TipologiaModel;
     id: number = 0;
-    
+
     constructor(
         private fb: FormBuilder,
         private activatedRoute: ActivatedRoute,
         private tipologiaService: TipologiaService,
         private messageService: MessageService
     ) {}
-    
+
     ngOnInit() {
         this.items = [
-            { icon: 'pi pi-home', route: '/' }, 
-            { label: 'Proyecto de Inversión' }, 
-            { label: 'Tipologías', route: '/proyecto-inversion/tipologia' }, 
+            { icon: 'pi pi-home', route: '/' },
+            { label: 'Proyecto de Inversión' },
+            { label: 'Tipologías', route: '/proyecto-inversion/tipologia' },
             { label: 'Editar', route: '/proyecto-inversion/tipologia/editar' }
         ];
         this.id = Number(this.activatedRoute.snapshot.paramMap.get('id'));
@@ -174,7 +174,7 @@ export class TipologiaEditarComponent implements OnInit {
                 this.grabando = false;
             },
             complete: () => {
-                console.log('Proceso de actualización completado.');
+
                 this.grabando = false;
             }
         });

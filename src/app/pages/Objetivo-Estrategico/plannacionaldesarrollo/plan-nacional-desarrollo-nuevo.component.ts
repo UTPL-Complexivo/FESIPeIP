@@ -59,7 +59,7 @@ import { ActiveFilterPipe } from '../../../pipes/active-filter.pipe';
                     </div>
                      <div class="p-field mt-8 mb-6">
                         <p-floatLabel>
-                            <p-select id="eje" formControlName="eje" [options]="ejes | activeFilter" optionLabel="valor" optionValue="valor" class="w-1/5" [showClear]="true"> </p-select>
+                            <p-select id="eje" formControlName="eje" [options]="ejes" optionLabel="valor" optionValue="valor" class="w-1/5" [showClear]="true"> </p-select>
                             <label for="eje">Eje</label>
                         </p-floatLabel>
                         @if (formPND.get('eje')?.invalid && formPND.get('eje')?.touched) {
@@ -78,7 +78,7 @@ import { ActiveFilterPipe } from '../../../pipes/active-filter.pipe';
             </form>
         </div>
     `,
-    imports: [AppDetallePrincipal, ReactiveFormsModule, AppToolbarCrud, FloatLabelModule, MessageModule, InputTextModule, ButtonModule, TextareaModule, SelectModule, ActiveFilterPipe],
+    imports: [AppDetallePrincipal, ReactiveFormsModule, AppToolbarCrud, FloatLabelModule, MessageModule, InputTextModule, ButtonModule, TextareaModule, SelectModule],
     providers: [MessageService]
 })
 export class PlanNacionalDesarrolloNuevoComponent implements OnInit {
@@ -90,6 +90,7 @@ export class PlanNacionalDesarrolloNuevoComponent implements OnInit {
     ngOnInit() {
         this.catalogoService.getCatalogosByTipo(1).subscribe({
             next: (data) => {
+                console.log('Ejes cargados:', data);
                 this.ejes = data;
             },
             error: (error) => {
@@ -101,7 +102,7 @@ export class PlanNacionalDesarrolloNuevoComponent implements OnInit {
     }
     onSubmit() {
         if(this.formPND.invalid) {
-            console.log('Formulario enviado:', this.formPND.value);
+
             this.formPND.markAllAsTouched();
             return;
         }

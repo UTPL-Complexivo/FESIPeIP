@@ -123,7 +123,7 @@ import { BadgeModule } from 'primeng/badge';
                 <ng-template #body let-usuario>
                     <tr>
                         <td>
-                            <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text" [routerLink]="['/usuarios', usuario.id]" pTooltip="Editar" tooltipPosition="top"></button>
+                            <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text" [routerLink]="['/gestion-usuarios/usuarios', usuario.id]" pTooltip="Editar" tooltipPosition="top"></button>
                             @if (usuario.estado === 'Activo') {
                                 <button pButton icon="pi pi-lock" class="p-button-rounded p-button-text" (click)="updateEstado(usuario.id, true)" pTooltip="Inactivar" tooltipPosition="top"></button>
                             } @else {

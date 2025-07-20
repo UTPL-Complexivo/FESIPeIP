@@ -1,3 +1,5 @@
+import { EstadoConfiguracionInstitucional } from "../shared/enums/estado-configuracion-institucional.enum";
+
 export interface InstitucionModel {
     id: number;
     codigo: string;
@@ -9,6 +11,6 @@ export interface InstitucionModel {
     direccion: string;
     telefono: string;
     correo: string;
-    estado: string;
+    estado: EstadoConfiguracionInstitucional;
     nivelGobierno: string;
 }

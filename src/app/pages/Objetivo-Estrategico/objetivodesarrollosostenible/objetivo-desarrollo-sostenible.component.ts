@@ -13,6 +13,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { ObjetivoDesarrolloSostenibleService } from '../../../service/objetivo-desarrollo-sostenible.service';
 import { DeleteModel } from '../../../models/delete.model';
+import { EstadoConfiguracionInstitucional } from '../../../shared/enums/estado-configuracion-institucional.enum';
+import { AppEstadoCi } from "../../../layout/component/app.estado-ci";
 
 @Component({
     selector: 'app-objetivo-desarrollo-sostenible',
@@ -90,7 +92,7 @@ import { DeleteModel } from '../../../models/delete.model';
                     <tr>
                         <td>
                             <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text" [routerLink]="['/objetivo-estrategico/objetivo-ds/editar', ods.id]" pTooltip="Editar" tooltipPosition="top"></button>
-                            @if (ods.estado === 'Activo') {
+                            @if (ods.estado === EstadoConfiguracionInstitucional.Activo) {
                                 <button pButton icon="pi pi-lock" class="p-button-rounded p-button-text" (click)="updateEstado(ods)" pTooltip="Inactivar" tooltipPosition="top"></button>
                             } @else {
                                 <button pButton icon="pi pi-unlock" severity="warn" class="p-button-rounded p-button-text" (click)="updateEstado(ods)" pTooltip="Activar" tooltipPosition="top"></button>
@@ -104,7 +106,7 @@ import { DeleteModel } from '../../../models/delete.model';
                             <img [src]="ods.icono" alt="Icono ODS" class="w-24 rounded" />
                         </td>
                         <td>
-                            <app-estado-general [estado]="ods.estado"></app-estado-general>
+                            <app-estado-ci [estado]="ods.estado"></app-estado-ci>
                         </td>
                     </tr>
                 </ng-template>
@@ -123,7 +125,7 @@ import { DeleteModel } from '../../../models/delete.model';
         <p-toast position="top-right"></p-toast>
         <app-dialog-confirmation [displayMotivoDialog]="displayMotivoDialog" [inactivar]="inactivar" [tituloMotivo]="tituloMotivo" [id]="idAEliminar" (cerrarDialogo)="dialogo($event)" (save)="confirmarEliminacion($event)"></app-dialog-confirmation>
     `,
-    imports: [AppCabeceraPrincipal, TableModule, IconFieldModule, InputIconModule, RouterModule, AppEstadoGeneral, ToastModule, AppDialogConfirmation, InputTextModule, ButtonModule],
+    imports: [AppCabeceraPrincipal, TableModule, IconFieldModule, InputIconModule, RouterModule, AppEstadoGeneral, ToastModule, AppDialogConfirmation, InputTextModule, ButtonModule, AppEstadoCi],
     providers: [ConfirmationService, MessageService]
 })
 export class ObjetivoDesarrolloSostenibleComponent implements OnInit {
@@ -135,6 +137,7 @@ export class ObjetivoDesarrolloSostenibleComponent implements OnInit {
     inactivar: boolean = false;
     tituloMotivo: string = '';
     idAEliminar: number = 0;
+    EstadoConfiguracionInstitucional = EstadoConfiguracionInstitucional;
     constructor(
         private messageService: MessageService,
         private odsService: ObjetivoDesarrolloSostenibleService
@@ -177,7 +180,7 @@ export class ObjetivoDesarrolloSostenibleComponent implements OnInit {
     updateEstado(ods: ObjetivoDesarrolloSostenibleModel) {
         const { estado, id } = ods;
         this.idAEliminar = id;
-        if (estado === 'Activo') {
+        if (estado === EstadoConfiguracionInstitucional.Activo) {
             this.inactivar = true;
             this.tituloMotivo = 'Motivo Inactivar ODS';
             this.displayMotivoDialog = true;
@@ -222,13 +225,13 @@ export class ObjetivoDesarrolloSostenibleComponent implements OnInit {
     private updateObjetivoEstado($event: any) {
         this.loading = true;
         const ods = this.odss.find((o) => o.id === $event.id);
-        if (ods) ods.estado = ods?.estado === 'Activo' ? 'Inactivo' : 'Activo';
+        if (ods) ods.estado = ods?.estado === EstadoConfiguracionInstitucional.Activo ? EstadoConfiguracionInstitucional.Inactivo : EstadoConfiguracionInstitucional.Activo;
         this.odsService.patchObjetivoDesarrolloSostenibleEstado(this.idAEliminar, $event).subscribe({
             next: (response) => {
                 const { error, mensaje } = response;
                 if (error) {
                     this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
-                    if (ods) ods.estado = ods?.estado === 'Activo' ? 'Inactivo' : 'Activo';
+                    if (ods) ods.estado = ods?.estado === EstadoConfiguracionInstitucional.Activo ? EstadoConfiguracionInstitucional.Inactivo : EstadoConfiguracionInstitucional.Activo;
                     return;
                 }
                 this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
@@ -236,7 +239,7 @@ export class ObjetivoDesarrolloSostenibleComponent implements OnInit {
             error: (error) => {
                 console.error('Error al inactivar el ODS:', error);
                 this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo inactivar el ODS.' });
-                if (ods) ods.estado = ods?.estado === 'Activo' ? 'Inactivo' : 'Activo';
+                if (ods) ods.estado = ods?.estado === EstadoConfiguracionInstitucional.Activo ? EstadoConfiguracionInstitucional.Inactivo : EstadoConfiguracionInstitucional.Activo;
                 this.loading = false;
             },
             complete: () => {

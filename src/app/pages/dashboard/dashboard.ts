@@ -1,12 +1,12 @@
 import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { forkJoin } from 'rxjs';
-import { NotificationsWidget } from './components/notificationswidget';
 import { StatsWidget, StatCard } from './components/statswidget';
 import { RecentSalesWidget } from './components/recentsaleswidget';
 import { BestSellingWidget } from './components/bestsellingwidget';
 import { RevenueStreamWidget } from './components/revenuestreamwidget';
 import { AdminUsersWidget } from './components/adminuserswidget';
+import { ObjetivosChartComponent } from './components/objetivos-chart.component';
 import { MacroSectorService } from '../../service/macro-sector.service';
 import { SectorService } from '../../service/sector.service';
 import { SubSectorService } from '../../service/sub-sector.service';
@@ -19,17 +19,20 @@ import { ActividadService } from '../../service/actividad.service';
 import { TipologiaActividadService } from '../../service/tipologia-actividad.service';
 import { UsuarioService } from '../../service/usuario.service';
 import { RolService } from '../../service/rol.service';
+import { NotificationService } from '../../service/notification.service';
 import { InstitucionModel } from '../../models/institucion.model';
 import { TipologiaModel } from '../../models/tipologia.model';
 import { ActividadModel } from '../../models/actividad.model';
 import { TipologiaActividadModel } from '../../models/tipologia-actividad.model';
 import { UsuarioModel } from '../../models/usuario.model';
 import { RolModel } from '../../models/rol.model';
+import { EstadoConfiguracionInstitucional } from '../../shared/enums/estado-configuracion-institucional.enum';
+import { EstadoObjetivosEstrategicos } from '../../shared/enums/estado-objetivos-estrategicos.enum';
 
 @Component({
     selector: 'app-dashboard',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [CommonModule, StatsWidget, RecentSalesWidget, BestSellingWidget, RevenueStreamWidget, NotificationsWidget, AdminUsersWidget],
+    imports: [CommonModule, StatsWidget, RecentSalesWidget, BestSellingWidget, RevenueStreamWidget, AdminUsersWidget, ObjetivosChartComponent],
     template: `
         <div class="grid grid-cols-12 gap-8">
             <!-- Estadísticas de Usuarios y Roles (solo administradores) -->
@@ -37,37 +40,49 @@ import { RolModel } from '../../models/rol.model';
                 <app-stats-widget class="contents" [cards]="cardsUsuariosRoles()" />
                 <!-- Widget detallado de usuarios para administradores -->
                 <div class="col-span-12">
-                    <app-admin-users-widget 
+                    <app-admin-users-widget
                         [usuarios]="usuarios()"
                         [roles]="roles()"
                         [loading]="loadingUsuariosRoles()"
                     />
                 </div>
             } @else {
-                <!-- Estadísticas de Configuración Institucional (no administradores) -->
-                <app-stats-widget class="contents" [cards]="cardsConfiguracion()" />
-
-                <!-- Estadísticas de Objetivos Estratégicos (solo planificadores) -->
+                <!-- Estadísticas de Configuración Institucional (planificadores) -->
                 @if (esPlanificador()) {
+                    <app-stats-widget class="contents" [cards]="cardsConfiguracion()" />
+                }
+
+                <!-- Estadísticas de Objetivos Estratégicos (planificadores, revisores y autoridad validante) -->
+                @if (esPlanificador() || esRevisor() || esAutoridadValidante()) {
                     <app-stats-widget class="contents" [cards]="cardsObjetivos()" />
                 }
 
-                <div class="col-span-12 xl:col-span-6">
-                    <app-recent-sales-widget 
-                        [instituciones]="ultimasInstituciones()" 
-                        [loading]="loadingInstituciones()" 
-                    />
-                    <app-best-selling-widget />
-                </div>
-                <div class="col-span-12 xl:col-span-6">
-                    <app-revenue-stream-widget 
-                        [tipologias]="tipologias()"
-                        [actividades]="actividades()"
-                        [tipologiasActividades]="tipologiasActividades()"
-                        [loading]="loadingProyectos()"
-                    />
-                    <app-notifications-widget />
-                </div>
+                <!-- Widgets adicionales (solo planificadores) -->
+                @if (esPlanificador()) {
+                    <div class="col-span-12 xl:col-span-6">
+                        <app-recent-sales-widget
+                            [instituciones]="ultimasInstituciones()"
+                            [loading]="loadingInstituciones()"
+                        />
+                        <app-best-selling-widget />
+                    </div>
+                    <div class="col-span-12 xl:col-span-6">
+                        <app-revenue-stream-widget
+                            [tipologias]="tipologias()"
+                            [actividades]="actividades()"
+                            [tipologiasActividades]="tipologiasActividades()"
+                            [loading]="loadingProyectos()"
+                        />
+                        <app-objetivos-chart />
+                    </div>
+                }
+
+                <!-- Widget simplificado para revisores y autoridad validante -->
+                @if (esRevisor() || esAutoridadValidante()) {
+                    <div class="col-span-12">
+                        <app-objetivos-chart />
+                    </div>
+                }
             }
         </div>
     `
@@ -86,6 +101,7 @@ export class Dashboard implements OnInit {
     private tipologiaActividadService = inject(TipologiaActividadService);
     private usuarioService = inject(UsuarioService);
     private rolService = inject(RolService);
+    private notificationService = inject(NotificationService);
 
     // Signals para el estado
     usuarioActual = signal<UsuarioModel | null>(null);
@@ -94,7 +110,7 @@ export class Dashboard implements OnInit {
     cardsUsuariosRoles = signal<StatCard[]>([]);
     ultimasInstituciones = signal<InstitucionModel[]>([]);
     loadingInstituciones = signal<boolean>(true);
-    
+
     // Signals para datos de proyectos
     tipologias = signal<TipologiaModel[]>([]);
     actividades = signal<ActividadModel[]>([]);
@@ -117,6 +133,16 @@ export class Dashboard implements OnInit {
         return usuario?.roles?.includes('Planificador') || false;
     });
 
+    esRevisor = computed(() => {
+        const usuario = this.usuarioActual();
+        return usuario?.roles?.includes('Revisor') || false;
+    });
+
+    esAutoridadValidante = computed(() => {
+        const usuario = this.usuarioActual();
+        return usuario?.roles?.includes('Autoridad') || false;
+    });
+
     ngOnInit(): void {
         this.obtenerUsuarioActual();
         // No inicializar skeletons ni cargar datos aquí
@@ -127,8 +153,8 @@ export class Dashboard implements OnInit {
      * Carga todos los datos necesarios para el widget de proyectos
      */
     private cargarDatosProyectos(): void {
-        // No cargar si es administrador
-        if (this.esAdministrador()) {
+        // Solo cargar para planificadores
+        if (!this.esPlanificador()) {
             return;
         }
 
@@ -156,53 +182,55 @@ export class Dashboard implements OnInit {
      * Inicializa las cards con estado de carga según el rol del usuario
      */
     inicializarSkeletons(): void {
-        // Si es administrador, solo inicializar skeleton para usuarios/roles
+        // Si es administrador, no inicializar skeletons (se maneja por separado)
         if (this.esAdministrador()) {
-            return; // No inicializar otros skeletons para administradores
+            return;
         }
 
-        // Cards de configuración institucional (no administradores)
-        this.cardsConfiguracion.set([
-            {
-                titulo: 'Macro Sectores',
-                valor: 0,
-                subtitulo: '',
-                icono: 'pi-building',
-                colorIcono: 'text-blue-500',
-                colorFondo: 'bg-blue-100 dark:bg-blue-400/10',
-                loading: true
-            },
-            {
-                titulo: 'Sectores',
-                valor: 0,
-                subtitulo: '',
-                icono: 'pi-sitemap',
-                colorIcono: 'text-orange-500',
-                colorFondo: 'bg-orange-100 dark:bg-orange-400/10',
-                loading: true
-            },
-            {
-                titulo: 'Subsectores',
-                valor: 0,
-                subtitulo: '',
-                icono: 'pi-share-alt',
-                colorIcono: 'text-cyan-500',
-                colorFondo: 'bg-cyan-100 dark:bg-cyan-400/10',
-                loading: true
-            },
-            {
-                titulo: 'Instituciones',
-                valor: 0,
-                subtitulo: '',
-                icono: 'pi-home',
-                colorIcono: 'text-purple-500',
-                colorFondo: 'bg-purple-100 dark:bg-purple-400/10',
-                loading: true
-            }
-        ]);
-
-        // Cards de objetivos (solo para planificadores)
+        // Cards de configuración institucional (solo para planificadores)
         if (this.esPlanificador()) {
+            this.cardsConfiguracion.set([
+                {
+                    titulo: 'Macro Sectores',
+                    valor: 0,
+                    subtitulo: '',
+                    icono: 'pi-building',
+                    colorIcono: 'text-blue-500',
+                    colorFondo: 'bg-blue-100 dark:bg-blue-400/10',
+                    loading: true
+                },
+                {
+                    titulo: 'Sectores',
+                    valor: 0,
+                    subtitulo: '',
+                    icono: 'pi-sitemap',
+                    colorIcono: 'text-orange-500',
+                    colorFondo: 'bg-orange-100 dark:bg-orange-400/10',
+                    loading: true
+                },
+                {
+                    titulo: 'Subsectores',
+                    valor: 0,
+                    subtitulo: '',
+                    icono: 'pi-share-alt',
+                    colorIcono: 'text-cyan-500',
+                    colorFondo: 'bg-cyan-100 dark:bg-cyan-400/10',
+                    loading: true
+                },
+                {
+                    titulo: 'Instituciones',
+                    valor: 0,
+                    subtitulo: '',
+                    icono: 'pi-home',
+                    colorIcono: 'text-purple-500',
+                    colorFondo: 'bg-purple-100 dark:bg-purple-400/10',
+                    loading: true
+                }
+            ]);
+        }
+
+        // Cards de objetivos (para planificadores, revisores y autoridad validante)
+        if (this.esPlanificador() || this.esRevisor() || this.esAutoridadValidante()) {
             this.cardsObjetivos.set([
                 {
                     titulo: 'Objetivos Institucionales',
@@ -246,8 +274,8 @@ export class Dashboard implements OnInit {
     }
 
     cargarEstadisticasConfiguracion(): void {
-        // No cargar si es administrador
-        if (this.esAdministrador()) {
+        // Solo cargar para planificadores
+        if (!this.esPlanificador()) {
             return;
         }
 
@@ -262,7 +290,7 @@ export class Dashboard implements OnInit {
                     {
                         titulo: 'Macro Sectores',
                         valor: data.macroSectores.length,
-                        subtitulo: `${data.macroSectores.filter(ms => ms.estado === 'Activo').length} activos configurados`,
+                        subtitulo: `${data.macroSectores.filter(ms => ms.estado === EstadoConfiguracionInstitucional.Activo).length} activos configurados`,
                         icono: 'pi-building',
                         colorIcono: 'text-blue-500',
                         colorFondo: 'bg-blue-100 dark:bg-blue-400/10',
@@ -271,7 +299,7 @@ export class Dashboard implements OnInit {
                     {
                         titulo: 'Sectores',
                         valor: data.sectores.length,
-                        subtitulo: `${data.sectores.filter(s => s.estado === 'Activo').length} activos en total`,
+                        subtitulo: `${data.sectores.filter(s => s.estado === EstadoConfiguracionInstitucional.Activo).length} activos en total`,
                         icono: 'pi-sitemap',
                         colorIcono: 'text-orange-500',
                         colorFondo: 'bg-orange-100 dark:bg-orange-400/10',
@@ -280,7 +308,7 @@ export class Dashboard implements OnInit {
                     {
                         titulo: 'Subsectores',
                         valor: data.subsectores.length,
-                        subtitulo: `${data.subsectores.filter(ss => ss.estado === 'Activo').length} activos registrados`,
+                        subtitulo: `${data.subsectores.filter(ss => ss.estado === EstadoConfiguracionInstitucional.Activo).length} activos registrados`,
                         icono: 'pi-share-alt',
                         colorIcono: 'text-cyan-500',
                         colorFondo: 'bg-cyan-100 dark:bg-cyan-400/10',
@@ -289,7 +317,7 @@ export class Dashboard implements OnInit {
                     {
                         titulo: 'Instituciones',
                         valor: data.instituciones.length,
-                        subtitulo: `${data.instituciones.filter(i => i.estado === 'Activo').length} activas funcionando`,
+                        subtitulo: `${data.instituciones.filter(i => i.estado === EstadoConfiguracionInstitucional.Activo).length} activas funcionando`,
                         icono: 'pi-home',
                         colorIcono: 'text-purple-500',
                         colorFondo: 'bg-purple-100 dark:bg-purple-400/10',
@@ -309,8 +337,8 @@ export class Dashboard implements OnInit {
     }
 
     cargarEstadisticasObjetivos(): void {
-        // Solo cargar si el usuario es planificador
-        if (!this.esPlanificador()) {
+        // Solo cargar si el usuario es planificador, revisor o autoridad validante
+        if (!this.esPlanificador() && !this.esRevisor() && !this.esAutoridadValidante()) {
             return;
         }
 
@@ -320,21 +348,72 @@ export class Dashboard implements OnInit {
             planesNacionalesDesarrollo: this.planNacionalDesarrolloService.getPlanesNacionalesDesarrollo()
         }).subscribe({
             next: (data) => {
-                const totalObjetivos = data.objetivosInstitucionales.length +
-                                     data.objetivosDesarrolloSostenible.length +
-                                     data.planesNacionalesDesarrollo.length;
+                // Para Autoridad Validante, filtrar solo objetivos en estado PendienteAutoridad
+                let objetivosInstitucionales = data.objetivosInstitucionales;
+                let objetivosDesarrolloSostenible = data.objetivosDesarrolloSostenible;
+                let planesNacionalesDesarrollo = data.planesNacionalesDesarrollo;
 
-                const objetivosActivos = data.objetivosInstitucionales.filter(obj => obj.estado === 'Activo').length +
-                                       data.objetivosDesarrolloSostenible.filter(ods => ods.estado === 'Activo').length +
-                                       data.planesNacionalesDesarrollo.filter(plan => plan.estado === 'Activo').length;
+                // Para Autoridad: los ODS y Planes Nacionales no requieren validación, solo son Activos/Inactivos
+                if (this.esAutoridadValidante()) {
+                    // Los objetivos institucionales sí requieren validación de autoridad
+                    // Mostrar todos los objetivos institucionales para ver el panorama completo
+                    objetivosInstitucionales = data.objetivosInstitucionales;
 
-                const porcentajeAlineacion = StatsWidget.obtenerPorcentajeActivos(objetivosActivos, totalObjetivos);
+                    // ODS y Planes solo filtrar por activos (no requieren validación de autoridad)
+                    objetivosDesarrolloSostenible = data.objetivosDesarrolloSostenible.filter(ods =>
+                        ods.estado === EstadoConfiguracionInstitucional.Activo
+                    );
+                    planesNacionalesDesarrollo = data.planesNacionalesDesarrollo.filter(plan =>
+                        plan.estado === EstadoConfiguracionInstitucional.Activo
+                    );
+                }
+
+                const totalObjetivos = objetivosInstitucionales.length +
+                                     objetivosDesarrolloSostenible.length +
+                                     planesNacionalesDesarrollo.length;
+
+                // Para Autoridad Validante: calcular objetivos pendientes de validación vs total
+                const objetivosPendientesValidacion = this.esAutoridadValidante() ?
+                    objetivosInstitucionales.filter(obj => obj.estado === EstadoObjetivosEstrategicos.PendienteAutoridad).length :
+                    0;
+
+                const objetivosActivosInstitucionales = objetivosInstitucionales.filter(obj => obj.estado === EstadoObjetivosEstrategicos.Activo).length;
+
+                const objetivosActivos = this.esAutoridadValidante() ?
+                    objetivosActivosInstitucionales +
+                    objetivosDesarrolloSostenible.length + // Ya filtrados por activos
+                    planesNacionalesDesarrollo.length : // Ya filtrados por activos
+                    objetivosActivosInstitucionales +
+                    objetivosDesarrolloSostenible.filter(ods => ods.estado === EstadoConfiguracionInstitucional.Activo).length +
+                    planesNacionalesDesarrollo.filter(plan => plan.estado === EstadoConfiguracionInstitucional.Activo).length;
+
+                // Para Autoridad: el porcentaje debe ser específico de objetivos institucionales
+                const porcentajeAlineacion = this.esAutoridadValidante() ?
+                    StatsWidget.obtenerPorcentajeActivos(objetivosPendientesValidacion, objetivosInstitucionales.length) :
+                    StatsWidget.obtenerPorcentajeActivos(objetivosActivos, totalObjetivos);
+
+                // Personalizar textos según el rol
+                const subtituloObjetivos = this.esAutoridadValidante() ?
+                    `${objetivosPendientesValidacion} pendientes de validación` :
+                    `${objetivosActivosInstitucionales} activos planificados`;
+
+                const subtituloODS = this.esAutoridadValidante() ?
+                    `${objetivosDesarrolloSostenible.length} activos disponibles` :
+                    `${objetivosDesarrolloSostenible.filter(ods => ods.estado === EstadoConfiguracionInstitucional.Activo).length} activos sostenibles`;
+
+                const subtituloPlanes = this.esAutoridadValidante() ?
+                    `${planesNacionalesDesarrollo.length} activos disponibles` :
+                    `${planesNacionalesDesarrollo.filter(plan => plan.estado === EstadoConfiguracionInstitucional.Activo).length} activos de desarrollo`;
+
+                const subtituloAlineacion = this.esAutoridadValidante() ?
+                    `${objetivosActivosInstitucionales} activos, ${objetivosPendientesValidacion} pendientes` :
+                    `${objetivosActivos} objetivos estratégicos`;
 
                 this.cardsObjetivos.set([
                     {
                         titulo: 'Objetivos Institucionales',
-                        valor: data.objetivosInstitucionales.length,
-                        subtitulo: `${data.objetivosInstitucionales.filter(obj => obj.estado === 'Activo').length} activos planificados`,
+                        valor: objetivosInstitucionales.length,
+                        subtitulo: subtituloObjetivos,
                         icono: 'pi-flag',
                         colorIcono: 'text-green-500',
                         colorFondo: 'bg-green-100 dark:bg-green-400/10',
@@ -342,8 +421,8 @@ export class Dashboard implements OnInit {
                     },
                     {
                         titulo: 'ODS',
-                        valor: data.objetivosDesarrolloSostenible.length,
-                        subtitulo: `${data.objetivosDesarrolloSostenible.filter(ods => ods.estado === 'Activo').length} activos sostenibles`,
+                        valor: objetivosDesarrolloSostenible.length,
+                        subtitulo: subtituloODS,
                         icono: 'pi-globe',
                         colorIcono: 'text-teal-500',
                         colorFondo: 'bg-teal-100 dark:bg-teal-400/10',
@@ -351,21 +430,21 @@ export class Dashboard implements OnInit {
                     },
                     {
                         titulo: 'Planes Nacionales',
-                        valor: data.planesNacionalesDesarrollo.length,
-                        subtitulo: `${data.planesNacionalesDesarrollo.filter(plan => plan.estado === 'Activo').length} activos de desarrollo`,
+                        valor: planesNacionalesDesarrollo.length,
+                        subtitulo: subtituloPlanes,
                         icono: 'pi-chart-line',
                         colorIcono: 'text-indigo-500',
                         colorFondo: 'bg-indigo-100 dark:bg-indigo-400/10',
                         loading: false
                     },
                     {
-                        titulo: 'Alineación Total',
+                        titulo: this.esAutoridadValidante() ? 'Validación Pendiente' : 'Alineación Total',
                         valor: porcentajeAlineacion,
-                        subtitulo: `${objetivosActivos} objetivos estratégicos`,
+                        subtitulo: subtituloAlineacion,
                         sufijo: '%',
-                        icono: 'pi-compass',
-                        colorIcono: 'text-pink-500',
-                        colorFondo: 'bg-pink-100 dark:bg-pink-400/10',
+                        icono: this.esAutoridadValidante() ? 'pi-clock' : 'pi-compass',
+                        colorIcono: this.esAutoridadValidante() ? 'text-orange-500' : 'text-pink-500',
+                        colorFondo: this.esAutoridadValidante() ? 'bg-orange-100 dark:bg-orange-400/10' : 'bg-pink-100 dark:bg-pink-400/10',
                         loading: false
                     }
                 ]);
@@ -385,8 +464,8 @@ export class Dashboard implements OnInit {
      * Carga las últimas 10 instituciones activas
      */
     cargarUltimasInstituciones(): void {
-        // No cargar si es administrador
-        if (this.esAdministrador()) {
+        // Solo cargar para planificadores
+        if (!this.esPlanificador()) {
             return;
         }
 
@@ -396,7 +475,7 @@ export class Dashboard implements OnInit {
                 // Filtrar solo instituciones activas, ordenar por ID descendente
                 // y tomar solo las primeras 10
                 this.ultimasInstituciones.set(instituciones
-                    .filter(institucion => institucion.estado === 'Activo')
+                    .filter(institucion => institucion.estado === EstadoConfiguracionInstitucional.Activo)
                     .sort((a, b) => b.id - a.id)
                     .slice(0, 10)
                 );
@@ -425,7 +504,7 @@ export class Dashboard implements OnInit {
         this.tipologiasActividades.set([]);
         this.usuarios.set([]);
         this.roles.set([]);
-        
+
         // Obtener usuario actual y cargar datos correspondientes
         this.obtenerUsuarioActual();
     }
@@ -437,23 +516,26 @@ export class Dashboard implements OnInit {
         this.usuarioService.getMe().subscribe({
             next: (usuario) => {
                 this.usuarioActual.set(usuario);
-                
+
                 // Inicializar skeletons después de conocer el rol
                 this.inicializarSkeletons();
-                
+
                 // Cargar datos específicos según el rol
                 if (usuario?.roles?.includes('Administrador')) {
                     // Solo cargar datos de usuarios y roles para administradores
                     this.cargarEstadisticasUsuariosRoles();
+                } else if (usuario?.roles?.includes('Revisor')) {
+                    // Para revisores solo cargar objetivos y alineaciones
+                    this.cargarEstadisticasObjetivos();
+                } else if (usuario?.roles?.includes('Autoridad')) {
+                    // Para autoridad validante solo cargar objetivos pendientes de validación
+                    this.cargarEstadisticasObjetivos();
                 } else {
-                    // Para otros roles cargar datos del dashboard general
+                    // Para planificadores cargar datos completos del dashboard
                     this.cargarEstadisticasConfiguracion();
                     this.cargarUltimasInstituciones();
                     this.cargarDatosProyectos();
-                    
-                    if (usuario?.roles?.includes('Planificador')) {
-                        this.cargarEstadisticasObjetivos();
-                    }
+                    this.cargarEstadisticasObjetivos();
                 }
             },
             error: (error) => {
@@ -474,7 +556,7 @@ export class Dashboard implements OnInit {
         }
 
         this.loadingUsuariosRoles.set(true);
-        
+
         // Inicializar skeleton para usuarios y roles
         this.cardsUsuariosRoles.set([
             {
@@ -523,7 +605,7 @@ export class Dashboard implements OnInit {
                 // Actualizar signals con los datos
                 this.usuarios.set(data.usuarios);
                 this.roles.set(data.roles);
-                
+
                 const usuariosActivos = data.usuarios.filter(u => u.estado === 'Activo' && !u.eliminado);
                 const rolesActivos = data.roles.filter(r => r.estado === 'Activo');
 
@@ -565,7 +647,7 @@ export class Dashboard implements OnInit {
                         loading: false
                     }
                 ]);
-                
+
                 this.loadingUsuariosRoles.set(false);
             },
             error: (error) => {

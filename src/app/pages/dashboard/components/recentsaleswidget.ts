@@ -63,7 +63,6 @@ export class RecentSalesWidget {
      * Método para refrescar la lista de instituciones (opcional para uso futuro)
      */
     refrescarInstituciones(): void {
-        // Este método podría emitir un evento al componente padre si es necesario
-        console.log('Solicitud de refrescar instituciones');
+
     }
 }
