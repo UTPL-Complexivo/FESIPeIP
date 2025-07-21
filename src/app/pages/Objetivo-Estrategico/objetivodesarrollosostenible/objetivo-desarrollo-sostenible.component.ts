@@ -125,7 +125,7 @@ import { AppEstadoCi } from "../../../layout/component/app.estado-ci";
         <p-toast position="top-right"></p-toast>
         <app-dialog-confirmation [displayMotivoDialog]="displayMotivoDialog" [inactivar]="inactivar" [tituloMotivo]="tituloMotivo" [id]="idAEliminar" (cerrarDialogo)="dialogo($event)" (save)="confirmarEliminacion($event)"></app-dialog-confirmation>
     `,
-    imports: [AppCabeceraPrincipal, TableModule, IconFieldModule, InputIconModule, RouterModule, AppEstadoGeneral, ToastModule, AppDialogConfirmation, InputTextModule, ButtonModule, AppEstadoCi],
+    imports: [AppCabeceraPrincipal, TableModule, IconFieldModule, InputIconModule, RouterModule, ToastModule, AppDialogConfirmation, InputTextModule, ButtonModule, AppEstadoCi],
     providers: [ConfirmationService, MessageService]
 })
 export class ObjetivoDesarrolloSostenibleComponent implements OnInit {

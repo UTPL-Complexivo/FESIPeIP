@@ -1,14 +1,18 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { AppCabeceraPrincipal } from '../../../layout/component/app.cabecera-principal';
+import { AppEstadoOe } from '../../../layout/component/app.estado-oe';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { Table, TableModule } from 'primeng/table';
 import { AlineacionModel } from '../../../models/alineacion.model';
+import { SolicitudAprobacionModel } from '../../../models/solicitud-aprobacion.model';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { RouterModule } from '@angular/router';
 import { ToastModule } from 'primeng/toast';
 import { AppDialogConfirmation } from '../../../layout/component/app.dialog-confirmation';
 import { AlineacionService } from '../../../service/alineacion.service';
+import { UsuarioService } from '../../../service/usuario.service';
+import { AprobacionesService } from '../../../service/aprobaciones.service';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { EjeColorPipe } from '../../../pipes/eje-color.pipe';
@@ -18,6 +22,8 @@ import { PlanNacionalDesarrolloService } from '../../../service/plan-nacional-de
 import { ObjetivoDesarrolloSostenibleService } from '../../../service/objetivo-desarrollo-sostenible.service';
 import { PlanNacionalDesarrolloModel } from '../../../models/plan-nacional-desarrollo.model';
 import { ObjetivoDesarrolloSostenibleModel } from '../../../models/objetivo-desarrollo-sostenible.model';
+import { UsuarioModel } from '../../../models/usuario.model';
+import { EstadoObjetivosEstrategicos } from '../../../shared/enums/estado-objetivos-estrategicos.enum';
 
 // Interfaz para las alineaciones individuales con información completa para agrupación
 interface AlineacionCompleta extends AlineacionModel {
@@ -33,7 +39,7 @@ interface AlineacionCompleta extends AlineacionModel {
     standalone: true,
     template: `
         <div class="card">
-            <app-cabecera-principal [items]="items" titulo="Alineacion Objetivo Estratégico ↔ PND ↔ ODS" linkNuevo="/objetivo-estrategico/alineacion/nuevo"></app-cabecera-principal>
+            <app-cabecera-principal [items]="items" [titulo]="getTituloSegunRol()" [linkNuevo]="esPlanificador() ? '/objetivo-estrategico/alineacion/nuevo' : ''"></app-cabecera-principal>
             <p-table
                 #dt1
                 [value]="alineacionesCompletas"
@@ -47,7 +53,7 @@ interface AlineacionCompleta extends AlineacionModel {
                 rowGroupMode="subheader"
                 groupRowsBy="grupoKey"
                 [responsiveLayout]="'scroll'"
-                [globalFilterFields]="['pndCompleto', 'nombreOI', 'nombreODS']"
+                [globalFilterFields]="['pndCompleto', 'nombreOI', 'nombreODS', 'nombreEstado']"
             >
                 <ng-template #caption>
                     <div class="flex justify-between items-center flex-column sm:flex-row">
@@ -62,13 +68,14 @@ interface AlineacionCompleta extends AlineacionModel {
                 </ng-template>
                 <ng-template #header>
                     <tr>
-                        <th style="width: 15%">Acciones</th>
-                        <th style="width: 85%">Objetivo de Desarrollo Sostenible</th>
+                        <th style="width: 20%">Acciones</th>
+                        <th style="width: 15%">Estado</th>
+                        <th style="width: 65%">Objetivo de Desarrollo Sostenible</th>
                     </tr>
                 </ng-template>
                 <ng-template #groupheader let-alineacion>
                     <tr pRowGroupHeader>
-                        <td colspan="2">
+                        <td colspan="3">
                             <div class="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-l-4" [style.border-left-color]="alineacion.pndEje | ejeColor:'hex'">
                                 <div class="flex items-center gap-3">
                                     <div class="w-4 h-4 rounded-full" [style.background-color]="alineacion.pndEje | ejeColor:'hex'"></div>
@@ -89,16 +96,50 @@ interface AlineacionCompleta extends AlineacionModel {
                 <ng-template #body let-alineacion>
                     <tr>
                         <td>
-                            <div class="flex gap-2 justify-center">
-                                <button pButton icon="pi pi-pencil" size="small"
-                                        class="p-button-rounded p-button-success p-button-text"
-                                        [routerLink]="['/objetivo-estrategico/alineacion/editar', alineacion.id]"
-                                        pTooltip="Editar alineación" tooltipPosition="top"></button>
-                                <button pButton icon="pi pi-trash" size="small"
-                                        class="p-button-rounded p-button-danger p-button-text"
-                                        (click)="deleteItem(alineacion.id, alineacion.pndCompleto, alineacion.nombreOI, alineacion.nombreODS)"
-                                        pTooltip="Eliminar alineación" tooltipPosition="top"></button>
+                            <div class="flex gap-2 justify-center flex-wrap">
+                                <!-- Botones de edición y eliminación (siempre visibles para planificadores) -->
+                                @if (esPlanificador()) {
+                                    <button pButton icon="pi pi-pencil" size="small"
+                                            class="p-button-rounded p-button-success p-button-text"
+                                            [routerLink]="['/objetivo-estrategico/alineacion/editar', alineacion.id]"
+                                            pTooltip="Editar alineación" tooltipPosition="top"></button>
+                                    <button pButton icon="pi pi-trash" size="small"
+                                            class="p-button-rounded p-button-danger p-button-text"
+                                            (click)="deleteItem(alineacion.id, alineacion.pndCompleto, alineacion.nombreOI, alineacion.nombreODS)"
+                                            pTooltip="Eliminar alineación" tooltipPosition="top"></button>
+                                }
+
+                                <!-- Botones de aprobación para Revisor -->
+                                @if (esRevisor() && alineacion.estado === EstadoObjetivosEstrategicos.PendienteRevision) {
+                                    <button pButton icon="pi pi-check" size="small"
+                                            class="p-button-rounded p-button-success p-button-text"
+                                            (click)="aprobarRevision(alineacion.id)"
+                                            pTooltip="Aprobar para Autoridad" tooltipPosition="top"></button>
+                                    <button pButton icon="pi pi-times" size="small"
+                                            class="p-button-rounded p-button-danger p-button-text"
+                                            (click)="rechazar(alineacion.id, 'revisor')"
+                                            pTooltip="Rechazar alineación" tooltipPosition="top"></button>
+                                }
+
+                                <!-- Botones de aprobación para Autoridad -->
+                                @if (esAutoridadValidante() && alineacion.estado === EstadoObjetivosEstrategicos.PendienteAutoridad) {
+                                    <button pButton icon="pi pi-verified" size="small"
+                                            class="p-button-rounded p-button-success p-button-text"
+                                            (click)="aprobarAutoridad(alineacion.id)"
+                                            pTooltip="Aprobar definitivamente" tooltipPosition="top"></button>
+                                    <button pButton icon="pi pi-times" size="small"
+                                            class="p-button-rounded p-button-danger p-button-text"
+                                            (click)="rechazar(alineacion.id, 'autoridad')"
+                                            pTooltip="Rechazar alineación" tooltipPosition="top"></button>
+                                }
+
+
                             </div>
+                        </td>
+                        <td>
+                            <app-estado-oe
+                                [estado]="alineacion.estado">
+                            </app-estado-oe>
                         </td>
                         <td>
                             <div class="flex items-center gap-3">
@@ -112,12 +153,12 @@ interface AlineacionCompleta extends AlineacionModel {
                 </ng-template>
                 <ng-template #emptymessage>
                     <tr>
-                        <td colspan="2">Al momento no se dispone de información.</td>
+                        <td colspan="3">Al momento no se dispone de información.</td>
                     </tr>
                 </ng-template>
                 <ng-template #loadingbody>
                     <tr>
-                        <td colspan="2">Cargando informacion. Por favor espere.</td>
+                        <td colspan="3">Cargando informacion. Por favor espere.</td>
                     </tr>
                 </ng-template>
             </p-table>
@@ -125,7 +166,7 @@ interface AlineacionCompleta extends AlineacionModel {
         <p-toast position="top-right"></p-toast>
         <app-dialog-confirmation [displayMotivoDialog]="displayMotivoDialog" [inactivar]="inactivar" [tituloMotivo]="tituloMotivo" [id]="idAEliminar" (cerrarDialogo)="dialogo($event)" (save)="confirmarEliminacion($event)"></app-dialog-confirmation>
     `,
-    imports: [AppCabeceraPrincipal, TableModule, IconFieldModule, InputIconModule, RouterModule, ToastModule, AppDialogConfirmation, InputTextModule, ButtonModule, EjeColorPipe, TooltipModule],
+    imports: [AppCabeceraPrincipal, TableModule, IconFieldModule, InputIconModule, RouterModule, ToastModule, AppDialogConfirmation, InputTextModule, ButtonModule, EjeColorPipe, TooltipModule, AppEstadoOe],
     providers: [ConfirmationService, MessageService]
 })
 export class AlineacionComponent implements OnInit {
@@ -135,29 +176,38 @@ export class AlineacionComponent implements OnInit {
     alineacionesCompletas: AlineacionCompleta[] = [];
     planesNacionalesDesarrollo: PlanNacionalDesarrolloModel[] = [];
     objetivosDesarrolloSostenible: ObjetivoDesarrolloSostenibleModel[] = [];
+    usuarioActual: UsuarioModel | null = null;
     loading: boolean = true;
     displayMotivoDialog: boolean = false;
-    inactivar: boolean = false;
+    inactivar: number = 0;
     tituloMotivo: string = '';
     idAEliminar: number = 0;
+
+    // Hacer accesible el enum en el template
+    EstadoObjetivosEstrategicos = EstadoObjetivosEstrategicos;
 
     constructor(
         private alineacionService: AlineacionService,
         private planNacionalDesarrolloService: PlanNacionalDesarrolloService,
-        private objetivoDesarrolloSostenibleService: ObjetivoDesarrolloSostenibleService
+        private objetivoDesarrolloSostenibleService: ObjetivoDesarrolloSostenibleService,
+        private usuarioService: UsuarioService,
+        private messageService: MessageService,
+        private aprobacionesService: AprobacionesService
     ) {}
     ngOnInit(): void {
         this.loading = true;
-        // Cargar todos los datos necesarios en paralelo
+        // Cargar todos los datos necesarios en paralelo, incluyendo usuario actual
         forkJoin({
             alineaciones: this.alineacionService.getAlineaciones(),
             planesNacionalesDesarrollo: this.planNacionalDesarrolloService.getPlanesNacionalesDesarrollo(),
-            objetivosDesarrolloSostenible: this.objetivoDesarrolloSostenibleService.getObjetivosDesarrolloSostenible()
+            objetivosDesarrolloSostenible: this.objetivoDesarrolloSostenibleService.getObjetivosDesarrolloSostenible(),
+            usuarioActual: this.usuarioService.getMe()
         }).subscribe({
             next: (data) => {
                 this.alineaciones = data.alineaciones;
                 this.planesNacionalesDesarrollo = data.planesNacionalesDesarrollo;
                 this.objetivosDesarrolloSostenible = data.objetivosDesarrolloSostenible;
+                this.usuarioActual = data.usuarioActual;
 
                 // Preparar las alineaciones completas para agrupación
                 this.prepararAlineacionesCompletas();
@@ -171,7 +221,23 @@ export class AlineacionComponent implements OnInit {
     }
 
     private prepararAlineacionesCompletas(): void {
-        this.alineacionesCompletas = this.alineaciones.map(alineacion => {
+        // Filtrar alineaciones según el rol del usuario
+        let alineacionesFiltradas = this.alineaciones;
+
+        if (this.esAutoridadValidante()) {
+            // Autoridad solo ve alineaciones pendientes de autoridad
+            alineacionesFiltradas = this.alineaciones.filter(a =>
+                a.estado === EstadoObjetivosEstrategicos.PendienteAutoridad
+            );
+        } else if (this.esRevisor()) {
+            // Revisor solo ve alineaciones pendientes de revisión
+            alineacionesFiltradas = this.alineaciones.filter(a =>
+                a.estado === EstadoObjetivosEstrategicos.PendienteRevision
+            );
+        }
+        // Planificadores ven todas las alineaciones (comportamiento por defecto)
+
+        this.alineacionesCompletas = alineacionesFiltradas.map(alineacion => {
             // Buscar el PND completo para obtener el eje
             const pnd = this.planesNacionalesDesarrollo.find(p => p.id === alineacion.planNacionalDesarrolloId);
             const ods = this.objetivosDesarrolloSostenible.find(o => o.id === alineacion.objetivoDesarrolloSostenibleId);
@@ -208,8 +274,8 @@ export class AlineacionComponent implements OnInit {
     deleteItem(alineacionId: number, pndNombre: string, oiNombre: string, odsNombre: string) {
         this.idAEliminar = alineacionId;
         this.displayMotivoDialog = true;
-        this.inactivar = true;
-        this.tituloMotivo = `¿Está seguro de eliminar la alineación "${pndNombre} → ${oiNombre} → ${odsNombre}"?`;
+        this.inactivar = 0;
+        this.tituloMotivo = `Motivo de Eliminación - ${pndNombre} → ${oiNombre} → ${odsNombre}`;
     }
 
     updateEstado(alineacionId: number) {
@@ -218,33 +284,237 @@ export class AlineacionComponent implements OnInit {
     }
 
     confirmarEliminacion(evento: any) {
-        if (evento.confirmar) {
-            // Aquí iría la lógica para eliminar la alineación
-            const motivo = { motivo: evento.motivo || 'Eliminación solicitada por el usuario' };
-            this.alineacionService.deleteAlineacion(this.idAEliminar, motivo).subscribe({
-                next: () => {
-                    // Recargar solo las alineaciones y reagrupar
-                    this.alineacionService.getAlineaciones().subscribe({
-                        next: (alineaciones) => {
-                            this.alineaciones = alineaciones;
-                            this.prepararAlineacionesCompletas();
+        const { inactivar, id, motivoInactivacion } = evento;
+        this.loading = true;
 
-                        }
-                    });
-                },
-                error: (error) => {
-                    console.error('Error al eliminar alineación:', error);
+        switch (inactivar) {
+            case 0:
+                // Eliminar
+                const motivo = { motivo: motivoInactivacion || 'Eliminación solicitada por el usuario' };
+                this.alineacionService.deleteAlineacion(id, motivo).subscribe({
+                    next: () => {
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Éxito',
+                            detail: 'Alineación eliminada correctamente'
+                        });
+                        this.recargarAlineaciones();
+                    },
+                    error: (error) => {
+                        console.error('Error al eliminar alineación:', error);
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Error',
+                            detail: 'No se pudo eliminar la alineación'
+                        });
+                        this.loading = false;
+                    },
+                    complete: () => {
+                        this.loading = false;
+                    }
+                });
+                break;
+            case 1:
+                // Rechazar por Revisor
+                const alineacionRevisor = this.alineaciones.find(a => a.id === id);
+                if (alineacionRevisor) {
+                    this.processApproval(alineacionRevisor, 'rechazar', motivoInactivacion);
                 }
-            });
+                break;
+            case 2:
+                // Rechazar por Autoridad
+                const alineacionAutoridad = this.alineaciones.find(a => a.id === id);
+                if (alineacionAutoridad) {
+                    this.processApproval(alineacionAutoridad, 'rechazar', motivoInactivacion);
+                }
+                break;
+            default:
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Acción no válida'
+                });
+                this.loading = false;
+                break;
         }
+
         this.displayMotivoDialog = false;
     }
     dialogo($event: boolean) {
         this.displayMotivoDialog = $event;
-        if ($event) {
-            this.inactivar = false;
+        if (!$event) {
+            this.inactivar = 0;
             this.tituloMotivo = '';
             this.idAEliminar = 0;
         }
+    }
+
+    /**
+     * Métodos para verificar roles del usuario actual
+     */
+    esPlanificador(): boolean {
+        return this.usuarioActual?.roles?.includes('Planificador') || false;
+    }
+
+    esRevisor(): boolean {
+        return this.usuarioActual?.roles?.includes('Revisor') || false;
+    }
+
+    esAutoridadValidante(): boolean {
+        return this.usuarioActual?.roles?.includes('Autoridad') || false;
+    }
+
+    /**
+     * Obtiene el título personalizado según el rol del usuario
+     */
+    getTituloSegunRol(): string {
+        if (this.esAutoridadValidante()) {
+            return 'Alineaciones Pendientes de Aprobación (Autoridad)';
+        } else if (this.esRevisor()) {
+            return 'Alineaciones Pendientes de Revisión';
+        } else {
+            return 'Alineación Objetivo Estratégico ↔ PND ↔ ODS';
+        }
+    }
+
+    /**
+     * Métodos para manejar aprobaciones y cambios de estado
+     */
+    aprobarRevision(alineacionId: number): void {
+        const alineacion = this.alineaciones.find(a => a.id === alineacionId);
+        if (alineacion) {
+            this.processApproval(alineacion, 'aprobar');
+        }
+    }
+
+    aprobarAutoridad(alineacionId: number): void {
+        const alineacion = this.alineaciones.find(a => a.id === alineacionId);
+        if (alineacion) {
+            this.processApproval(alineacion, 'aprobar');
+        }
+    }
+
+    rechazar(alineacionId: number, tipoRechazo: 'revisor' | 'autoridad'): void {
+        const alineacion = this.alineaciones.find(a => a.id === alineacionId);
+        if (alineacion) {
+            this.idAEliminar = alineacionId;
+            this.displayMotivoDialog = true;
+            this.inactivar = tipoRechazo === 'revisor' ? 1 : 2;
+            this.tituloMotivo = `Motivo de Rechazo - ${alineacion.nombrePND} → ${alineacion.nombreOI} → ${alineacion.nombreODS}`;
+        }
+    }
+
+    /**
+     * Procesa las aprobaciones usando el servicio de aprobaciones
+     */
+    private processApproval(alineacion: AlineacionModel, accion: 'aprobar' | 'rechazar', comentario?: string): void {
+        if (!this.loading) {
+            this.loading = true;
+        }
+
+        const solicitudAprobacion: SolicitudAprobacionModel = {
+            tipoEntidad: 'alineacion',
+            id: alineacion.id,
+            accion: accion,
+            comentario: comentario
+        };
+
+        this.aprobacionesService.aprobarSolicitud(solicitudAprobacion).subscribe({
+            next: (response) => {
+                const { error, mensaje } = response;
+                if (error) {
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: mensaje
+                    });
+                    return;
+                }
+
+                const severity = accion === 'aprobar' ? 'success' : 'warn';
+                const summary = accion === 'aprobar' ? 'Aprobado' : 'Rechazado';
+
+                this.messageService.add({
+                    severity: severity,
+                    summary: summary,
+                    detail: mensaje
+                });
+
+                // Recargar las alineaciones para reflejar los cambios
+                this.recargarAlineaciones();
+            },
+            error: (error: any) => {
+                console.error('Error en proceso de aprobación:', error);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'No se pudo procesar la solicitud de aprobación'
+                });
+                this.loading = false;
+            },
+            complete: () => {
+                this.loading = false;
+            }
+        });
+    }
+
+    /**
+     * Método auxiliar para cambiar el estado de una alineación
+     */
+    private cambiarEstadoAlineacion(alineacionId: number, nuevoEstado: EstadoObjetivosEstrategicos,
+                                   mensajeExito: string, mensajeError: string): void {
+        // Buscar la alineación actual
+        const alineacion = this.alineaciones.find(a => a.id === alineacionId);
+        if (!alineacion) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Alineación no encontrada'
+            });
+            return;
+        }
+
+        // Crear una copia con el nuevo estado
+        const alineacionActualizada = { ...alineacion, estado: nuevoEstado };
+
+        this.alineacionService.updateAlineacion(alineacionId, alineacionActualizada).subscribe({
+            next: () => {
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Éxito',
+                    detail: mensajeExito
+                });
+                this.recargarAlineaciones();
+            },
+            error: (error: any) => {
+                console.error('Error al cambiar estado:', error);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: mensajeError
+                });
+            }
+        });
+    }
+
+    /**
+     * Método auxiliar para recargar alineaciones después de cambios de estado
+     */
+    private recargarAlineaciones(): void {
+        this.alineacionService.getAlineaciones().subscribe({
+            next: (alineaciones) => {
+                this.alineaciones = alineaciones;
+                // Aplicar filtros según el rol y reagrupar
+                this.prepararAlineacionesCompletas();
+            },
+            error: (error: any) => {
+                console.error('Error al recargar alineaciones:', error);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Error al recargar la lista de alineaciones'
+                });
+            }
+        });
     }
 }

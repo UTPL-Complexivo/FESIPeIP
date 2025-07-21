@@ -18,6 +18,7 @@ import { PlanNacionalDesarrolloModel } from '../../../models/plan-nacional-desar
 import { AlineacionModel } from '../../../models/alineacion.model';
 import { ActiveFilterPipe } from '../../../pipes/active-filter.pipe';
 import { EjeColorPipe } from '../../../pipes/eje-color.pipe';
+import { EstadoObjetivosEstrategicos } from '../../../shared/enums/estado-objetivos-estrategicos.enum';
 
 // Extender la interfaz para incluir displayName
 interface PlanNacionalDesarrolloExtendido extends PlanNacionalDesarrolloModel {
@@ -230,6 +231,16 @@ export class AlineacionEditarComponent implements OnInit {
         this.alineacionService.getAlineacionById(this.alineacionId).subscribe({
             next: (alineacion) => {
                 this.alineacion = alineacion;
+
+                // Mostrar mensaje de advertencia si la alineación fue rechazada
+                if (alineacion.estado === EstadoObjetivosEstrategicos.Rechazado) {
+                    this.messageService.add({
+                        severity: 'warn',
+                        summary: 'Advertencia',
+                        detail: 'La alineación fue rechazada y se colocará en estado pendiente una vez guarde la información.'
+                    });
+                }
+
                 this.alineacionForm.patchValue({
                     objetivoInstitucionalId: alineacion.objetivoInstitucionalId,
                     planNacionalDesarrolloId: alineacion.planNacionalDesarrolloId,
