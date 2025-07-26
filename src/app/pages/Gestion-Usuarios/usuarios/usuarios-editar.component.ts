@@ -9,12 +9,20 @@ import { FloatLabelModule } from 'primeng/floatlabel';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { RolModel } from '../../../models/rol.model';
+import { InstitucionModel } from '../../../models/institucion.model';
+import { EstadoConfiguracionInstitucional } from '../../../shared/enums/estado-configuracion-institucional.enum';
 import { ToastModule } from 'primeng/toast';
 import { InputTextModule } from 'primeng/inputtext';
 import { UsuarioService } from '../../../service/usuario.service';
 import { UsuarioModel } from '../../../models/usuario.model';
 import { RolService } from '../../../service/rol.service';
+import { InstitucionService } from '../../../service/institucion.service';
 import { ToolbarModule } from 'primeng/toolbar';
+
+// Interfaz extendida para mostrar código y nombre
+interface InstitucionExtendida extends InstitucionModel {
+    displayName: string;
+}
 @Component({
     selector: 'app-usuarios-editar',
     standalone: true,
@@ -146,11 +154,27 @@ import { ToolbarModule } from 'primeng/toolbar';
                         }
                     }
                 </div>
+                @if (usuarioForm.get('tipoUsuario')?.value === 'Externo') {
+                    <div class="p-field mb-6">
+                        <p-floatLabel>
+                            <p-select id="institucion" formControlName="idEntidadEstado" [options]="instituciones" optionLabel="displayName" optionValue="id" class="w-1/2" [showClear]="true" [filter]="true"></p-select>
+                            <label for="institucion">Institución</label>
+                        </p-floatLabel>
+                        @if (usuarioForm.get('idEntidadEstado')?.invalid && usuarioForm.get('idEntidadEstado')?.touched) {
+                            @if (usuarioForm.get('idEntidadEstado')?.errors?.['required']) {
+                                <p-message severity="error" variant="simple" size="small">Institución es requerida para usuarios externos</p-message>
+                            }
+                        }
+                    </div>
+                }
                 <div class="p-field mb-8">
                     <p-floatLabel>
-                        <p-select id="roles" formControlName="roles" [options]="roles" optionLabel="nombre" optionValue="nombre" class="w-1/5" [showClear]="true"></p-select>
-                        <label for="tipoUsuario">Rol</label>
+                        <p-select id="roles" formControlName="roles" [options]="roles" optionLabel="nombre" optionValue="nombre" class="w-1/5" [showClear]="true" [disabled]="usuarioForm.get('tipoUsuario')?.value === 'Externo'"></p-select>
+                        <label for="roles">Rol</label>
                     </p-floatLabel>
+                    @if (usuarioForm.get('tipoUsuario')?.value === 'Externo') {
+                        <p-message severity="info" variant="simple" size="small">Los usuarios externos tienen automáticamente el rol "Externo"</p-message>
+                    }
                     @if (usuarioForm.get('roles')?.invalid && usuarioForm.get('roles')?.touched) {
                         @if (usuarioForm.get('roles')?.errors?.['required']) {
                             <p-message severity="error" variant="simple" size="small">Rol es requerido</p-message>
@@ -177,18 +201,37 @@ export class UsuariosEditarComponent implements OnInit {
         { label: 'Externo', value: 'Externo' }
     ];
     roles: RolModel[] = [];
+    instituciones: InstitucionExtendida[] = [];
     usuario!: UsuarioModel;
     constructor(
         private fb: FormBuilder,
         private activatedRoute: ActivatedRoute,
         private usuarioService: UsuarioService,
         private rolService: RolService,
+        private institucionService: InstitucionService,
         private messageService: MessageService
     ) {}
     ngOnInit(): void {
         this.items = [{ icon: 'pi pi-home', route: '/' }, { label: 'Gestión de Usuarios' }, { label: 'Usuarios' }, { label: 'Nuevo', route: '/usuarios/editar' }];
 
         this.initializeUserForm();
+
+        // Cargar instituciones
+        this.institucionService.getInstituciones().subscribe({
+            next: (data) => {
+                this.instituciones = data
+                    .filter(institucion => institucion.estado === EstadoConfiguracionInstitucional.Activo)
+                    .map(institucion => ({
+                        ...institucion,
+                        displayName: `${institucion.codigo} - ${institucion.nombre}`
+                    }))
+                    .sort((a, b) => a.nombre.localeCompare(b.nombre));
+            },
+            error: (error) => {
+                console.error('Error fetching instituciones:', error);
+            }
+        });
+
         this.activatedRoute.params.subscribe((params) => {
             const id = params['id'];
             if (id) {
@@ -226,11 +269,35 @@ export class UsuariosEditarComponent implements OnInit {
             avatarUrl: ['', [Validators.pattern('https?://.+')]],
             userName: [{ value: '', disabled: true }, [Validators.required, Validators.minLength(3)]],
             tipoUsuario: ['Interno', [Validators.required]],
+            idEntidadEstado: [''],
             roles: ['', [Validators.required]],
             estado: [''],
             eliminado: [false],
             primerNombre: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(255)]],
             segundoNombre: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(255)]]
+        });
+
+        // Agregar listener para el cambio de tipo de usuario
+        this.usuarioForm.get('tipoUsuario')!.valueChanges.subscribe((tipoUsuario) => {
+            const institucionControl = this.usuarioForm.get('idEntidadEstado');
+            const rolesControl = this.usuarioForm.get('roles');
+
+            if (tipoUsuario === 'Externo') {
+                institucionControl!.setValidators([Validators.required]);
+                // Establecer automáticamente el rol como "Externo" para usuarios externos
+                rolesControl!.setValue('Externo');
+                rolesControl!.disable();
+            } else {
+                institucionControl!.clearValidators();
+                institucionControl!.setValue('');
+                // Habilitar la selección de roles para usuarios internos
+                rolesControl!.enable();
+                if (rolesControl!.value === 'Externo') {
+                    rolesControl!.setValue('');
+                }
+            }
+            institucionControl!.updateValueAndValidity();
+            rolesControl!.updateValueAndValidity();
         });
     }
     actualizarNombre() {
@@ -246,13 +313,18 @@ export class UsuariosEditarComponent implements OnInit {
             return;
         }
         this.grabando = true;
-        const rolesSeleccionados = this.usuarioForm.get('roles')!.value;
+
+        // Obtener los valores del formulario incluyendo campos deshabilitados
+        const formValue = this.usuarioForm.getRawValue();
+
+        const rolesSeleccionados = formValue.roles;
         if (typeof rolesSeleccionados === 'string') {
-            this.usuarioForm.get('roles')!.setValue([rolesSeleccionados]);
+            formValue.roles = [rolesSeleccionados];
         }
+
         this.usuario = {
             ...this.usuario,
-            ...this.usuarioForm.value
+            ...formValue
         };
 
         this.usuario.eliminado = false;

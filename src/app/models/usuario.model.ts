@@ -11,4 +11,5 @@ export interface UsuarioModel {
     eliminado: boolean;
     primerNombre: string;
     segundoNombre: string;
+    idEntidadEstado: number;
 }

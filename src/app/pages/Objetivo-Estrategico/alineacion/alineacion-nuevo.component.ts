@@ -16,8 +16,9 @@ import { ObjetivoInstitucionalModel } from '../../../models/objetivo-institucion
 import { ObjetivoDesarrolloSostenibleModel } from '../../../models/objetivo-desarrollo-sostenible.model';
 import { PlanNacionalDesarrolloModel } from '../../../models/plan-nacional-desarrollo.model';
 import { AlineacionModel } from '../../../models/alineacion.model';
-import { ActiveFilterPipe } from '../../../pipes/active-filter.pipe';
 import { EjeColorPipe } from '../../../pipes/eje-color.pipe';
+import { ActiveApproveFilterPipe } from "../../../pipes/active-approve-filter.pipe";
+import { ActiveFilterPipe } from "../../../pipes/active-filter.pipe";
 
 // Extender la interfaz para incluir displayName
 interface PlanNacionalDesarrolloExtendido extends PlanNacionalDesarrolloModel {
@@ -55,7 +56,7 @@ interface GrupoPND {
                             <p-select
                                 id="objetivoInstitucional"
                                 formControlName="objetivoInstitucionalId"
-                                [options]="objetivosInstitucionales | activeFilter"
+                                [options]="objetivosInstitucionales | activeApproveFilter"
                                 optionLabel="nombre"
                                 optionValue="id"
                                 [showClear]="true"
@@ -124,7 +125,7 @@ interface GrupoPND {
                             <p-multiselect
                                 id="objetivoDesarrolloSostenible"
                                 formControlName="objetivosDesarrolloSostenibleIds"
-                                [options]="objetivosDesarrolloSostenible | activeFilter:true"
+                                [options]="objetivosDesarrolloSostenible | activeFilter"
                                 optionLabel="displayName"
                                 optionValue="id"
                                 [showClear]="true"
@@ -163,17 +164,18 @@ interface GrupoPND {
         <p-toast position="top-right"></p-toast>
     `,
     imports: [
-        ReactiveFormsModule,
-        AppDetallePrincipal,
-        AppToolbarCrud,
-        FloatLabelModule,
-        SelectModule,
-        MultiSelectModule,
-        MessageModule,
-        ToastModule,
-        ActiveFilterPipe,
-        EjeColorPipe
-    ],
+    ReactiveFormsModule,
+    AppDetallePrincipal,
+    AppToolbarCrud,
+    FloatLabelModule,
+    SelectModule,
+    MultiSelectModule,
+    MessageModule,
+    ToastModule,
+    EjeColorPipe,
+    ActiveApproveFilterPipe,
+    ActiveFilterPipe
+],
     providers: [MessageService]
 })
 export class AlineacionNuevoComponent implements OnInit {

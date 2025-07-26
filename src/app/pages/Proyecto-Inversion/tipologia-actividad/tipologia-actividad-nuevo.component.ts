@@ -17,6 +17,7 @@ import { TipologiaModel } from '../../../models/tipologia.model';
 import { ActividadModel } from '../../../models/actividad.model';
 import { AppDetallePrincipal } from "../../../layout/component/app.detalle-principal";
 import { AppToolbarCrud } from "../../../layout/component/app.toolbar-crud";
+import { EstadoConfiguracionInstitucional } from '../../../shared/enums/estado-configuracion-institucional.enum';
 
 @Component({
     selector: 'app-tipologia-actividad-nuevo',
@@ -92,7 +93,7 @@ export class TipologiaActividadNuevoComponent implements OnInit {
     loadTipologias() {
         this.tipologiaService.getTipologias().subscribe({
             next: (data) => {
-                this.tipologias = data.filter(t => t.estado === 'Activo');
+                this.tipologias = data.filter(t => t.estado === EstadoConfiguracionInstitucional.Activo);
             },
             error: (error) => {
                 console.error('Error al cargar tipologías:', error);
@@ -104,7 +105,7 @@ export class TipologiaActividadNuevoComponent implements OnInit {
     loadActividades() {
         this.actividadService.getActividades().subscribe({
             next: (data) => {
-                this.actividades = data.filter(a => a.estado === 'Activo');
+                this.actividades = data.filter(a => a.estado === EstadoConfiguracionInstitucional.Activo);
             },
             error: (error) => {
                 console.error('Error al cargar actividades:', error);

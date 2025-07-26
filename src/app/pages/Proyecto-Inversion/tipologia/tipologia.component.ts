@@ -17,9 +17,11 @@ import { TextareaModule } from 'primeng/textarea';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { AppCabeceraPrincipal } from '../../../layout/component/app.cabecera-principal';
 import { AppDialogConfirmation } from '../../../layout/component/app.dialog-confirmation';
-import { AppEstadoGeneral } from "../../../layout/component/app.estado-general";
+import { AppEstadoGeneral } from '../../../layout/component/app.estado-general';
 import { TipologiaService } from '../../../service/tipologia.service';
 import { DeleteModel } from '../../../models/delete.model';
+import { AppEstadoCi } from '../../../layout/component/app.estado-ci';
+import { EstadoConfiguracionInstitucional } from '../../../shared/enums/estado-configuracion-institucional.enum';
 
 @Component({
     selector: 'app-tipologia',
@@ -93,7 +95,7 @@ import { DeleteModel } from '../../../models/delete.model';
                     <tr>
                         <td>
                             <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text" [routerLink]="['/proyecto-inversion/tipologia/editar', tipologia.id]" pTooltip="Editar" tooltipPosition="top"></button>
-                            @if (tipologia.estado === 'Activo') {
+                            @if (tipologia.estado === EstadoConfiguracionInstitucional.Activo) {
                                 <button pButton icon="pi pi-lock" class="p-button-rounded p-button-text" (click)="updateEstado(tipologia.id)" pTooltip="Inactivar" tooltipPosition="top"></button>
                             } @else {
                                 <button pButton icon="pi pi-unlock" severity="warn" class="p-button-rounded p-button-text" (click)="updateEstado(tipologia.id)" pTooltip="Activar" tooltipPosition="top"></button>
@@ -104,7 +106,7 @@ import { DeleteModel } from '../../../models/delete.model';
                         <td>{{ tipologia.nombre }}</td>
                         <td>{{ tipologia.descripcion }}</td>
                         <td>
-                            <app-estado-general [estado]="tipologia.estado"></app-estado-general>
+                            <app-estado-ci [estado]="tipologia.estado"></app-estado-ci>
                         </td>
                     </tr>
                 </ng-template>
@@ -138,7 +140,7 @@ import { DeleteModel } from '../../../models/delete.model';
         FloatLabelModule,
         AppCabeceraPrincipal,
         AppDialogConfirmation,
-        AppEstadoGeneral
+        AppEstadoCi
     ],
     providers: [MessageService]
 })
@@ -151,19 +153,14 @@ export class TipologiaComponent implements OnInit {
     idAEliminar: number | null = null;
     inactivar: boolean = false;
     tituloMotivo: string = 'Motivo de eliminación';
-
+    EstadoConfiguracionInstitucional = EstadoConfiguracionInstitucional;
     constructor(
         private messageService: MessageService,
         private tipologiaService: TipologiaService
-    ) {
-    }
+    ) {}
 
     ngOnInit(): void {
-        this.items = [
-            { icon: 'pi pi-home', route: '/' }, 
-            { label: 'Proyecto de Inversión' }, 
-            { label: 'Tipologías', route: '/proyecto-inversion/tipologia' }
-        ];
+        this.items = [{ icon: 'pi pi-home', route: '/' }, { label: 'Proyecto de Inversión' }, { label: 'Tipologías', route: '/proyecto-inversion/tipologia' }];
         this.getTipologias();
     }
 
@@ -199,7 +196,7 @@ export class TipologiaComponent implements OnInit {
             return;
         }
         const tipologia = this.tipologias.find((t) => t.id === id);
-        if (tipologia?.estado === 'Activo') {
+        if (tipologia?.estado === EstadoConfiguracionInstitucional.Activo) {
             this.tituloMotivo = 'Motivo de inactivación';
             this.inactivar = true;
             this.idAEliminar = id;
@@ -238,29 +235,28 @@ export class TipologiaComponent implements OnInit {
     }
 
     confirmarEliminacion($event: any) {
-        const {inactivar, id, motivo} = $event;
+        const { inactivar, id, motivo } = $event;
         this.inactivar = inactivar;
         this.loading = true;
         let tipologia = this.tipologias.find((t) => t.id === id);
         let deleteTipologia: DeleteModel = {
             id: this.idAEliminar!,
             motivoInactivacion: $event.motivoInactivacion || 'Eliminado desde el sistema'
-        }
+        };
 
         if (this.inactivar) {
-            if (tipologia) tipologia.estado = tipologia?.estado === 'Activo' ? 'Inactivo' : 'Activo';
             this.tipologiaService.patchTipologiaEstado(this.idAEliminar!, deleteTipologia).subscribe({
                 next: (response) => {
                     const { error, mensaje } = response;
                     if (error) {
                         this.messageService.add({ severity: 'error', summary: 'Error', detail: mensaje });
-                    } else {
-                        this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
+                        return;
                     }
+                    this.messageService.add({ severity: 'success', summary: 'Éxito', detail: mensaje });
+                    if (tipologia) tipologia.estado = tipologia?.estado === EstadoConfiguracionInstitucional.Activo ? EstadoConfiguracionInstitucional.Inactivo : EstadoConfiguracionInstitucional.Activo;
                 },
                 error: (error) => {
                     console.error('Error al actualizar el estado de la tipología:', error);
-                    if (tipologia) tipologia.estado = tipologia.estado === 'Activo' ? 'Inactivo' : 'Activo';
                     this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el estado de la tipología.' });
                     this.loading = false;
                 },

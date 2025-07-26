@@ -6,6 +6,7 @@ import { LayoutService } from '../../../layout/service/layout.service';
 import { TipologiaModel } from '../../../models/tipologia.model';
 import { ActividadModel } from '../../../models/actividad.model';
 import { TipologiaActividadModel } from '../../../models/tipologia-actividad.model';
+import { EstadoConfiguracionInstitucional } from '../../../shared/enums/estado-configuracion-institucional.enum';
 
 @Component({
     selector: 'app-revenue-stream-widget',
@@ -52,8 +53,8 @@ export class RevenueStreamWidget implements OnInit, OnDestroy {
         });
 
         // Separar tipologías activas e inactivas
-        const tipologiasActivas = tipologiasConActividades.filter(t => t.estado === 'Activo');
-        const tipologiasInactivas = tipologiasConActividades.filter(t => t.estado === 'Inactivo');
+        const tipologiasActivas = tipologiasConActividades.filter(t => t.estado === EstadoConfiguracionInstitucional.Activo);
+        const tipologiasInactivas = tipologiasConActividades.filter(t => t.estado === EstadoConfiguracionInstitucional.Inactivo);
 
         const documentStyle = getComputedStyle(document.documentElement);
 

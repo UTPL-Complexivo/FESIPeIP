@@ -16,9 +16,10 @@ import { ObjetivoInstitucionalModel } from '../../../models/objetivo-institucion
 import { ObjetivoDesarrolloSostenibleModel } from '../../../models/objetivo-desarrollo-sostenible.model';
 import { PlanNacionalDesarrolloModel } from '../../../models/plan-nacional-desarrollo.model';
 import { AlineacionModel } from '../../../models/alineacion.model';
-import { ActiveFilterPipe } from '../../../pipes/active-filter.pipe';
 import { EjeColorPipe } from '../../../pipes/eje-color.pipe';
 import { EstadoObjetivosEstrategicos } from '../../../shared/enums/estado-objetivos-estrategicos.enum';
+import { ActiveApproveFilterPipe } from "../../../pipes/active-approve-filter.pipe";
+import { ActiveFilterPipe } from "../../../pipes/active-filter.pipe";
 
 // Extender la interfaz para incluir displayName
 interface PlanNacionalDesarrolloExtendido extends PlanNacionalDesarrolloModel {
@@ -57,7 +58,7 @@ interface GrupoPND {
                             <p-select
                                 id="objetivoInstitucional"
                                 formControlName="objetivoInstitucionalId"
-                                [options]="objetivosInstitucionales | activeFilter"
+                                [options]="objetivosInstitucionales | activeApproveFilter"
                                 optionLabel="nombre"
                                 optionValue="id"
                                 [showClear]="true"
@@ -163,16 +164,17 @@ interface GrupoPND {
         <p-toast position="top-right"></p-toast>
     `,
     imports: [
-        ReactiveFormsModule,
-        AppDetallePrincipal,
-        AppToolbarCrud,
-        FloatLabelModule,
-        SelectModule,
-        MessageModule,
-        ToastModule,
-        ActiveFilterPipe,
-        EjeColorPipe
-    ],
+    ReactiveFormsModule,
+    AppDetallePrincipal,
+    AppToolbarCrud,
+    FloatLabelModule,
+    SelectModule,
+    MessageModule,
+    ToastModule,
+    ActiveApproveFilterPipe,
+    EjeColorPipe,
+    ActiveFilterPipe
+],
     providers: [MessageService]
 })
 export class AlineacionEditarComponent implements OnInit {
@@ -370,7 +372,6 @@ export class AlineacionEditarComponent implements OnInit {
                     summary: 'Éxito',
                     detail: mensaje || 'La alineación se actualizó exitosamente.'
                 });
-                this.router.navigate(['/objetivo-estrategico/alineacion']);
             },
             error: (error) => {
                 console.error('Error al actualizar la alineación:', error);

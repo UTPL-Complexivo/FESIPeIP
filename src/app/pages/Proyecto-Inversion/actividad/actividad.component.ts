@@ -20,6 +20,8 @@ import { AppDialogConfirmation } from '../../../layout/component/app.dialog-conf
 import { AppEstadoGeneral } from "../../../layout/component/app.estado-general";
 import { ActividadService } from '../../../service/actividad.service';
 import { DeleteModel } from '../../../models/delete.model';
+import { EstadoConfiguracionInstitucional } from '../../../shared/enums/estado-configuracion-institucional.enum';
+import { AppEstadoCi } from "../../../layout/component/app.estado-ci";
 
 @Component({
     selector: 'app-actividad',
@@ -84,7 +86,7 @@ import { DeleteModel } from '../../../models/delete.model';
                     <tr>
                         <td>
                             <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text" [routerLink]="['/proyecto-inversion/actividad/editar', actividad.id]" pTooltip="Editar" tooltipPosition="top"></button>
-                            @if (actividad.estado === 'Activo') {
+                            @if (actividad.estado === EstadoConfiguracionInstitucional.Activo) {
                                 <button pButton icon="pi pi-lock" class="p-button-rounded p-button-text" (click)="updateEstado(actividad.id)" pTooltip="Inactivar" tooltipPosition="top"></button>
                             } @else {
                                 <button pButton icon="pi pi-unlock" severity="warn" class="p-button-rounded p-button-text" (click)="updateEstado(actividad.id)" pTooltip="Activar" tooltipPosition="top"></button>
@@ -94,7 +96,7 @@ import { DeleteModel } from '../../../models/delete.model';
                         <td>{{ actividad.codigo }}</td>
                         <td>{{ actividad.nombre }}</td>
                         <td>
-                            <app-estado-general [estado]="actividad.estado"></app-estado-general>
+                            <app-estado-ci [estado]="actividad.estado"></app-estado-ci>
                         </td>
                     </tr>
                 </ng-template>
@@ -113,23 +115,23 @@ import { DeleteModel } from '../../../models/delete.model';
         <p-toast position="top-right"></p-toast>
         <app-dialog-confirmation [displayMotivoDialog]="displayMotivoDialog" [inactivar]="inactivar" [tituloMotivo]="tituloMotivo" [id]="idAEliminar" (cerrarDialogo)="dialogo($event)" (save)="confirmarEliminacion($event)"></app-dialog-confirmation>`,
     imports: [
-        RouterModule,
-        CommonModule,
-        ToolbarModule,
-        TableModule,
-        IconFieldModule,
-        InputIconModule,
-        BadgeModule,
-        ToastModule,
-        InputTextModule,
-        ButtonModule,
-        DialogModule,
-        InputTextModule,
-        FloatLabelModule,
-        AppCabeceraPrincipal,
-        AppDialogConfirmation,
-        AppEstadoGeneral
-    ],
+    RouterModule,
+    CommonModule,
+    ToolbarModule,
+    TableModule,
+    IconFieldModule,
+    InputIconModule,
+    BadgeModule,
+    ToastModule,
+    InputTextModule,
+    ButtonModule,
+    DialogModule,
+    InputTextModule,
+    FloatLabelModule,
+    AppCabeceraPrincipal,
+    AppDialogConfirmation,
+    AppEstadoCi
+],
     providers: [MessageService]
 })
 export class ActividadComponent implements OnInit {
@@ -141,7 +143,7 @@ export class ActividadComponent implements OnInit {
     idAEliminar: number | null = null;
     inactivar: boolean = false;
     tituloMotivo: string = 'Motivo de eliminación';
-
+    EstadoConfiguracionInstitucional = EstadoConfiguracionInstitucional;
     constructor(
         private messageService: MessageService,
         private actividadService: ActividadService
@@ -189,7 +191,7 @@ export class ActividadComponent implements OnInit {
             return;
         }
         const actividad = this.actividades.find((a) => a.id === id);
-        if (actividad?.estado === 'Activo') {
+        if (actividad?.estado === EstadoConfiguracionInstitucional.Activo) {
             this.tituloMotivo = 'Motivo de inactivación';
             this.inactivar = true;
             this.idAEliminar = id;
@@ -238,7 +240,7 @@ export class ActividadComponent implements OnInit {
         }
 
         if (this.inactivar) {
-            if (actividad) actividad.estado = actividad?.estado === 'Activo' ? 'Inactivo' : 'Activo';
+            if (actividad) actividad.estado = actividad?.estado === EstadoConfiguracionInstitucional.Inactivo ? EstadoConfiguracionInstitucional.Activo : EstadoConfiguracionInstitucional.Inactivo;
             this.actividadService.patchActividadEstado(this.idAEliminar!, deleteActividad).subscribe({
                 next: (response) => {
                     const { error, mensaje } = response;
@@ -250,7 +252,7 @@ export class ActividadComponent implements OnInit {
                 },
                 error: (error) => {
                     console.error('Error al actualizar el estado de la actividad:', error);
-                    if (actividad) actividad.estado = actividad.estado === 'Activo' ? 'Inactivo' : 'Activo';
+                    if (actividad) actividad.estado = actividad.estado === EstadoConfiguracionInstitucional.Inactivo ? EstadoConfiguracionInstitucional.Activo : EstadoConfiguracionInstitucional.Inactivo;
                     this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el estado de la actividad.' });
                     this.loading = false;
                 },
