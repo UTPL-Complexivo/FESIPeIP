@@ -20,6 +20,7 @@ import { ActividadService } from '../../../service/actividad.service';
 import { ProyectoInversionModel } from '../../../models/proyecto-inversion.model';
 import { ActividadModel } from '../../../models/actividad.model';
 import { AnexoProyectoModel } from '../../../models/anexo-proyecto.model';
+import { EstadoObjetivosEstrategicos } from '../../../shared/enums/estado-objetivos-estrategicos.enum';
 import { AppDetallePrincipal } from "../../../layout/component/app.detalle-principal";
 import { AppToolbarCrud } from "../../../layout/component/app.toolbar-crud";
 
@@ -351,6 +352,15 @@ export class ProyectoEditarComponent implements OnInit {
                 });
                 this.proyecto = data;
                 this.nombre = `Editar Proyecto: ${data.titulo}`;
+
+                // Mostrar mensaje de advertencia si el proyecto fue rechazado
+                if (data.estado === EstadoObjetivosEstrategicos.Rechazado) {
+                    this.messageService.add({
+                        severity: 'warn',
+                        summary: 'Advertencia',
+                        detail: 'El proyecto fue rechazado y se colocará en estado pendiente una vez guarde la información.'
+                    });
+                }
             },
             error: (error) => {
                 console.error('Error al obtener el proyecto:', error);
@@ -386,15 +396,24 @@ export class ProyectoEditarComponent implements OnInit {
 
         this.proyectoInversionService.update(this.id, proyectoData).subscribe({
             next: (respuesta) => {
-                const { data } = respuesta;
+                const { data, error, mensaje } = respuesta;
                 // Si hay anexos nuevos, subirlos después de actualizar el proyecto
                 if (this.anexosNuevos.length > 0) {
                     this.subirAnexosNuevos(this.id);
                 } else {
+                    if(error) {
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Error',
+                            detail: mensaje || 'No se pudo actualizar el proyecto.'
+                        });
+                        this.grabando = false;
+                        return;
+                    }
                     this.messageService.add({
                         severity: 'success',
                         summary: 'Éxito',
-                        detail: 'Proyecto actualizado correctamente'
+                        detail: mensaje || 'Proyecto actualizado correctamente'
                     });
                     this.proyecto = data;
                     this.grabando = false;

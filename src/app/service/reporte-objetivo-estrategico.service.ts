@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { HttpClient } from '@angular/common/http';
-import { FiltroMacroSectorModel } from '../models/filtro-macro-sector.model';
-import { ReporteMacroSectorModel } from '../models/reporte-macrosector.model';
+import { FiltroObjetivoEstrategicoModel } from '../models/filtro-objetivo-estrategico.model';
+import { ReporteObjetivoEstrategicoModel } from '../models/reporte-objetivo-estrategico.model';
 import { Observable } from 'rxjs';
 
 // Interfaces para las opciones de los selectores
@@ -14,34 +14,34 @@ export interface OpcionSelect {
 @Injectable({
   providedIn: 'root'
 })
-export class ReporteConfiguracionInstitucionalService {
-  apiUrl: string = `${environment.apiUrl}/ReportesConfiguracion`;
+export class ReporteObjetivoEstrategicoService {
+  apiUrl: string = `${environment.apiUrl}/ReportesObjetivosEstrategicos`;
 
   constructor(private http: HttpClient) { }
 
-  getData(filtro: FiltroMacroSectorModel): Observable<ReporteMacroSectorModel[]> {
-    return this.http.post<ReporteMacroSectorModel[]>(`${this.apiUrl}/json`, filtro, {
+  getData(filtro: FiltroObjetivoEstrategicoModel): Observable<ReporteObjetivoEstrategicoModel[]> {
+    return this.http.post<ReporteObjetivoEstrategicoModel[]>(`${this.apiUrl}/json`, filtro, {
       responseType: 'json',
       headers: { 'Content-Type': 'application/json' }
     });
   }
 
-  exportToPDF(filtro: FiltroMacroSectorModel): Observable<Blob> {
+  exportToPDF(filtro: FiltroObjetivoEstrategicoModel): Observable<Blob> {
     return this.http.post(`${this.apiUrl}/pdf`, filtro, {
       responseType: 'blob',
       headers: { 'Content-Type': 'application/json' }
     });
   }
 
-  exportToExcel(filtro: FiltroMacroSectorModel): Observable<Blob> {
+  exportToExcel(filtro: FiltroObjetivoEstrategicoModel): Observable<Blob> {
     return this.http.post(`${this.apiUrl}/excel`, filtro, {
       responseType: 'blob',
       headers: { 'Content-Type': 'application/json' }
     });
   }
 
-  exportToJSON(filtro: FiltroMacroSectorModel): Observable<ReporteMacroSectorModel[]> {
-    return this.http.post<ReporteMacroSectorModel[]>(`${this.apiUrl}/json`, filtro, {
+  exportToJSON(filtro: FiltroObjetivoEstrategicoModel): Observable<ReporteObjetivoEstrategicoModel[]> {
+    return this.http.post<ReporteObjetivoEstrategicoModel[]>(`${this.apiUrl}/json`, filtro, {
       responseType: 'json',
       headers: { 'Content-Type': 'application/json' }
     });

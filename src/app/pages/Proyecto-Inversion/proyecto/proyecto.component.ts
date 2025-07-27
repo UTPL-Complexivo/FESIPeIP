@@ -13,6 +13,7 @@ import { ToastModule } from 'primeng/toast';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
+import { FormsModule } from '@angular/forms';
 import { EstadoObjetivosEstrategicos } from '../../../shared/enums/estado-objetivos-estrategicos.enum';
 import { TagModule } from 'primeng/tag';
 import { ProyectoInversionService } from '../../../service/proyecto-inversion.service';
@@ -20,13 +21,16 @@ import { ProyectoInversionEstadoLogModel } from '../../../models/proyecto-invers
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { TimelineModule } from 'primeng/timeline';
+import { UsuarioService } from '../../../service/usuario.service';
+import { UsuarioModel } from '../../../models/usuario.model';
+import { AppDialogConfirmation } from '../../../layout/component/app.dialog-confirmation';
 
 @Component({
     selector: 'app-proyecto',
     standalone: true,
     template: `
         <div class="card">
-            <app-cabecera-principal [items]="items" titulo="Proyectos de Inversión" linkNuevo="/proyecto-inversion/proyecto/nuevo"></app-cabecera-principal>
+            <app-cabecera-principal [items]="items" [titulo]="getTituloSegunRol()" [linkNuevo]="esExterno() ? '/proyecto-inversion/proyecto/nuevo' : ''"></app-cabecera-principal>
             <p-table
                 #dt1
                 [value]="proyectos"
@@ -94,26 +98,62 @@ import { TimelineModule } from 'primeng/timeline';
                     <tr>
                         <td>
                             <div class="flex gap-2 justify-center">
+                                <!-- Botón ver estados - siempre visible -->
                                 <button pButton icon="pi pi-eye" size="small"
                                         class="p-button-rounded p-button-info p-button-text"
                                         (click)="mostrarEstados(proyecto)"
                                         pTooltip="Ver estados del proyecto" tooltipPosition="top"></button>
-                                <button pButton icon="pi pi-pencil" size="small"
-                                        class="p-button-rounded p-button-success p-button-text"
-                                        [routerLink]="['/proyecto-inversion/proyecto/editar', proyecto.id]"
-                                        pTooltip="Editar proyecto" tooltipPosition="top"></button>
+
+                                <!-- Botones de edición y eliminación - solo para usuarios externos -->
+                                @if (esExterno()) {
+                                    <button pButton icon="pi pi-pencil" size="small"
+                                            class="p-button-rounded p-button-success p-button-text"
+                                            [routerLink]="['/proyecto-inversion/proyecto/editar', proyecto.id]"
+                                            pTooltip="Editar proyecto" tooltipPosition="top"></button>
+                                    <button pButton icon="pi pi-trash" size="small"
+                                            class="p-button-rounded p-button-danger p-button-text"
+                                            (click)="eliminarProyecto(proyecto)"
+                                            pTooltip="Eliminar proyecto" tooltipPosition="top"></button>
+                                }
+
+                                <!-- Botón ver actividades - siempre visible -->
                                 <button pButton icon="pi pi-list" size="small"
                                         class="p-button-rounded p-button-warning p-button-text"
                                         (click)="mostrarActividades(proyecto)"
                                         pTooltip="Ver actividades" tooltipPosition="top"></button>
-                                <button pButton icon="pi pi-paperclip" size="small"
-                                        class="p-button-rounded p-button-secondary p-button-text"
-                                        [routerLink]="['/proyecto-inversion/proyecto', proyecto.id, 'anexos']"
-                                        pTooltip="Ver anexos" tooltipPosition="top"></button>
-                                <button pButton icon="pi pi-trash" size="small"
-                                        class="p-button-rounded p-button-danger p-button-text"
-                                        (click)="eliminarProyecto(proyecto)"
-                                        pTooltip="Eliminar proyecto" tooltipPosition="top"></button>
+
+                                <!-- Botón anexos - visible para revisor, externo y autoridad -->
+                                @if (esExterno() || esRevisor() || esAutoridadValidante()) {
+                                    <button pButton icon="pi pi-paperclip" size="small"
+                                            class="p-button-rounded p-button-secondary p-button-text"
+                                            [routerLink]="['/proyecto-inversion/proyecto', proyecto.id, 'anexos']"
+                                            pTooltip="Ver anexos" tooltipPosition="top"></button>
+                                }
+
+                                <!-- Botones de aprobación para Revisor -->
+                                @if (esRevisor() && proyecto.estado === EstadoObjetivosEstrategicos.PendienteRevision) {
+                                    <button pButton icon="pi pi-check" size="small"
+                                            class="p-button-rounded p-button-success p-button-text"
+                                            (click)="aprobarRevision(proyecto.id)"
+                                            pTooltip="Aprobar para Autoridad" tooltipPosition="top"></button>
+                                    <button pButton icon="pi pi-times" size="small"
+                                            class="p-button-rounded p-button-danger p-button-text"
+                                            (click)="rechazar(proyecto.id, 'revisor')"
+                                            pTooltip="Rechazar proyecto" tooltipPosition="top"></button>
+                                }
+
+                                <!-- Botones de aprobación para Autoridad -->
+                                @if (esAutoridadValidante() && proyecto.estado === EstadoObjetivosEstrategicos.PendienteAutoridad) {
+                                    <button pButton icon="pi pi-verified" size="small"
+                                            class="p-button-rounded p-button-success p-button-text"
+                                            (click)="aprobarAutoridad(proyecto.id)"
+                                            pTooltip="Aprobar definitivamente" tooltipPosition="top"></button>
+                                    <button pButton icon="pi pi-times" size="small"
+                                            class="p-button-rounded p-button-danger p-button-text"
+                                            (click)="rechazar(proyecto.id, 'autoridad')"
+                                            pTooltip="Rechazar proyecto" tooltipPosition="top"></button>
+                                }
+
                             </div>
                         </td>
                         <td>
@@ -194,7 +234,7 @@ import { TimelineModule } from 'primeng/timeline';
             [header]="'Estados del Proyecto: ' + (proyectoSeleccionado?.titulo || '')"
             [(visible)]="mostrarDialogoEstados"
             [modal]="true"
-            [style]="{ width: '60vw', maxWidth: '900px' }"
+            [style]="{ width: '60vw', maxWidth: '600px' }"
             [draggable]="false"
             [resizable]="false">
 
@@ -215,6 +255,13 @@ import { TimelineModule } from 'primeng/timeline';
                                 <i class="pi pi-user mr-2"></i>
                                 <strong>Usuario:</strong> {{ estado.nombreUsuario }}
                             </div>
+                            @if (estado.motivo && estado.motivo.trim() !== '') {
+                                <div class="text-sm text-gray-700 mb-2 p-2 bg-gray-50 rounded border-l-4 border-blue-400">
+                                    <i class="pi pi-comment mr-2 text-blue-600"></i>
+                                    <strong class="text-blue-800">Comentario:</strong>
+                                    <div class="mt-1 text-gray-800">{{ estado.motivo }}</div>
+                                </div>
+                            }
                             <div class="text-xs text-gray-400">
                                 <i class="pi pi-calendar mr-2"></i>
                                 ID: {{ estado.proyectoId }}
@@ -222,8 +269,9 @@ import { TimelineModule } from 'primeng/timeline';
                         </div>
                     </ng-template>
                     <ng-template #marker let-estado>
-                        <div class="flex items-center justify-center w-8 h-8 rounded-full border-2 border-blue-500 bg-blue-100">
-                            <i class="pi pi-check text-blue-600 text-sm"></i>
+                        <div class="flex items-center justify-center w-8 h-8 rounded-full border-2"
+                             [ngClass]="getMarkerClass(estado.nombreEstado)">
+                            <i [class]="getMarkerIcon(estado.nombreEstado)"></i>
                         </div>
                     </ng-template>
                 </p-timeline>
@@ -243,6 +291,8 @@ import { TimelineModule } from 'primeng/timeline';
                 </button>
             </div>
         </p-dialog>
+
+        <app-dialog-confirmation [displayMotivoDialog]="displayMotivoDialog" [inactivar]="inactivar" [tituloMotivo]="tituloMotivo" [id]="idAEliminar" (cerrarDialogo)="dialogo($event)" (save)="confirmarEliminacion($event)"></app-dialog-confirmation>
     `,
     imports: [
         CommonModule,
@@ -259,7 +309,9 @@ import { TimelineModule } from 'primeng/timeline';
         TagModule,
         ConfirmDialogModule,
         DialogModule,
-        TimelineModule
+        TimelineModule,
+        FormsModule,
+        AppDialogConfirmation
     ],
     providers: [MessageService, ConfirmationService]
 })
@@ -274,6 +326,7 @@ export class ProyectoComponent implements OnInit {
 
     proyectos: ProyectoInversionModel[] = [];
     loading: boolean = true;
+    usuarioActual: UsuarioModel | null = null;
 
     // Propiedades para el diálogo de actividades
     mostrarDialogoActividades: boolean = false;
@@ -285,25 +338,58 @@ export class ProyectoComponent implements OnInit {
     estadosProyecto: ProyectoInversionEstadoLogModel[] = [];
     cargandoEstados: boolean = false;
 
+    // Propiedades para el diálogo de rechazo
+    displayMotivoDialog: boolean = false;
+    inactivar: number = 0;
+    tituloMotivo: string = '';
+    idAEliminar: number = 0;
+    tipoRechazoActual: 'revisor' | 'autoridad' = 'revisor';
+
     // Hacer accesible el enum en el template
     EstadoObjetivosEstrategicos = EstadoObjetivosEstrategicos;
 
     constructor(
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
-        private proyectoInversionService: ProyectoInversionService
+        private proyectoInversionService: ProyectoInversionService,
+        private usuarioService: UsuarioService
     ) {}
 
     ngOnInit(): void {
-        this.cargarProyectos();
+        this.cargarUsuarioActual();
+    }
+
+    cargarUsuarioActual(): void {
+        this.usuarioService.getMe().subscribe({
+            next: (usuario) => {
+                this.usuarioActual = usuario;
+                // Cargar proyectos después de obtener el usuario
+                this.cargarProyectos();
+            },
+            error: (error) => {
+                console.error('Error al cargar usuario:', error);
+                // Cargar proyectos de todas formas, pero sin filtro de usuario
+                this.cargarProyectos();
+            }
+        });
     }
 
     cargarProyectos(): void {
         this.loading = true;
 
-        this.proyectoInversionService.getAll().subscribe({
+        // Usar endpoint específico para usuarios externos
+        let serviceCall;
+
+        if (this.esExterno() && this.usuarioActual?.id) {
+            serviceCall = this.proyectoInversionService.getProyectosByUserId(this.usuarioActual.id);
+        } else {
+            serviceCall = this.proyectoInversionService.getAll();
+        }
+
+        serviceCall.subscribe({
             next: (proyectos) => {
-                this.proyectos = proyectos;
+                // Filtrar proyectos según el rol del usuario (excepto externos que ya tienen filtro en backend)
+                this.proyectos = this.esExterno() ? proyectos : this.filtrarProyectos(proyectos);
                 this.loading = false;
             },
             error: (error) => {
@@ -389,7 +475,7 @@ export class ProyectoComponent implements OnInit {
         this.proyectoSeleccionado = proyecto;
         this.cargandoEstados = true;
         this.mostrarDialogoEstados = true;
-        
+
         this.proyectoInversionService.getEstados(proyecto.id).subscribe({
             next: (estados) => {
                 this.estadosProyecto = estados;
@@ -423,6 +509,204 @@ export class ProyectoComponent implements OnInit {
             day: '2-digit',
             hour: '2-digit',
             minute: '2-digit'
+        });
+    }
+
+    /**
+     * Obtiene las clases CSS para el marker del timeline según el estado
+     */
+    getMarkerClass(nombreEstado: string): string {
+        const estado = nombreEstado?.toLowerCase();
+
+        if (estado?.includes('rechazado') || estado?.includes('inactivo')) {
+            return 'border-red-500 bg-red-100';
+        } else if (estado?.includes('revision') || estado?.includes('pendiente')) {
+            return 'border-blue-500 bg-blue-100';
+        } else if (estado?.includes('autoridad') || estado?.includes('pendienteautoridad')) {
+            return 'border-orange-500 bg-orange-100';
+        } else if (estado?.includes('aprobado') || estado?.includes('activado') || estado?.includes('activo')) {
+            return 'border-green-500 bg-green-100';
+        }
+
+        // Por defecto
+        return 'border-gray-500 bg-gray-100';
+    }
+
+    /**
+     * Obtiene el icono apropiado para el marker del timeline según el estado
+     */
+    getMarkerIcon(nombreEstado: string): string {
+        const estado = nombreEstado?.toLowerCase();
+
+        if (estado?.includes('rechazado')) {
+            return 'pi pi-times text-red-600 text-sm';
+        } else if (estado?.includes('inactivo')) {
+            return 'pi pi-ban text-red-600 text-sm';
+        } else if (estado?.includes('revision') || estado?.includes('pendiente')) {
+            return 'pi pi-clock text-blue-600 text-sm';
+        } else if (estado?.includes('autoridad') || estado?.includes('pendienteautoridad')) {
+            return 'pi pi-user-edit text-orange-600 text-sm';
+        } else if (estado?.includes('aprobado')) {
+            return 'pi pi-check-circle text-green-600 text-sm';
+        } else if (estado?.includes('activado') || estado?.includes('activo')) {
+            return 'pi pi-check text-green-600 text-sm';
+        }
+
+        // Por defecto
+        return 'pi pi-circle text-gray-600 text-sm';
+    }
+
+    // Métodos de verificación de roles
+    esExterno(): boolean {
+        return this.usuarioActual?.roles?.includes('Externo') || false;
+    }
+
+    esRevisor(): boolean {
+        return this.usuarioActual?.roles?.includes('Revisor') || false;
+    }
+
+    esAutoridadValidante(): boolean {
+        return this.usuarioActual?.roles?.includes('Autoridad') || false;
+    }
+
+    /**
+     * Filtra los proyectos según el rol del usuario
+     * Nota: Los usuarios externos usan getMisProyectos() y no requieren filtrado adicional
+     */
+    filtrarProyectos(proyectos: ProyectoInversionModel[]): ProyectoInversionModel[] {
+        if (this.esRevisor()) {
+            // El revisor solo ve proyectos pendientes de revisión
+            return proyectos.filter(proyecto =>
+                proyecto.estado === EstadoObjetivosEstrategicos.PendienteRevision
+            );
+        } else if (this.esAutoridadValidante()) {
+            // La autoridad solo ve proyectos pendientes de autorización
+            return proyectos.filter(proyecto =>
+                proyecto.estado === EstadoObjetivosEstrategicos.PendienteAutoridad
+            );
+        }
+
+        // Por defecto, devolver todos los proyectos (para roles administrativos)
+        return proyectos;
+    }
+
+    getTituloSegunRol(): string {
+        if (this.esAutoridadValidante()) {
+            return 'Proyectos Pendientes de Aprobación (Autoridad)';
+        } else if (this.esRevisor()) {
+            return 'Proyectos Pendientes de Revisión';
+        } else {
+            return 'Proyectos de Inversión';
+        }
+    }
+
+    // Métodos de aprobación/rechazo
+    aprobarRevision(proyectoId: number): void {
+        const proyecto = this.proyectos.find(p => p.id === proyectoId);
+        if (proyecto) {
+            this.processApproval(proyecto, 'aprobar');
+        }
+    }
+
+    aprobarAutoridad(proyectoId: number): void {
+        const proyecto = this.proyectos.find(p => p.id === proyectoId);
+        if (proyecto) {
+            this.processApproval(proyecto, 'aprobar');
+        }
+    }
+
+    rechazar(proyectoId: number, tipoRechazo: 'revisor' | 'autoridad'): void {
+        const proyecto = this.proyectos.find(p => p.id === proyectoId);
+        if (!proyecto) return;
+
+        // Configurar el diálogo de rechazo usando el patrón de alineaciones
+        this.inactivar = 2; // Indicador para rechazo
+        this.idAEliminar = proyectoId;
+        this.tipoRechazoActual = tipoRechazo;
+        this.displayMotivoDialog = true;
+        this.tituloMotivo = `Motivo de Rechazo (${tipoRechazo === 'revisor' ? 'Revisor' : 'Autoridad'}) - ${proyecto.titulo}`;
+    }
+
+    confirmarEliminacion(evento: any): void {
+        const { inactivar, id, motivoInactivacion } = evento;
+
+        if (inactivar === 2) { // Es un rechazo
+            const proyecto = this.proyectos.find(p => p.id === id);
+            if (proyecto) {
+                this.processApproval(proyecto, 'rechazar', motivoInactivacion);
+            }
+        }
+
+        this.displayMotivoDialog = false;
+    }
+
+    dialogo($event: boolean): void {
+        this.displayMotivoDialog = $event;
+        if (!$event) {
+            // Limpiar datos cuando se cierra el diálogo
+            this.tituloMotivo = '';
+            this.idAEliminar = 0;
+            this.inactivar = 0;
+        }
+    }
+
+    cerrarDialogoRechazo(): void {
+        this.displayMotivoDialog = false;
+        this.idAEliminar = 0;
+        this.inactivar = 0;
+        this.tipoRechazoActual = 'revisor';
+    }
+
+    private processApproval(proyecto: ProyectoInversionModel, accion: 'aprobar' | 'rechazar', comentario?: string): void {
+        // Determinar el estado basado en la acción y el rol actual
+        let estado: string;
+
+        if (accion === 'rechazar') {
+            estado = 'Rechazado';
+        } else {
+            // Si es aprobación, determinar el siguiente estado según el rol
+            if (this.esRevisor()) {
+                estado = 'PendienteAutoridad'; // Revisor aprueba -> pasa a Autoridad
+            } else if (this.esAutoridadValidante()) {
+                estado = 'Activo'; // Autoridad aprueba -> estado final activo
+            } else {
+                estado = 'PendienteRevision'; // Cualquier otro caso
+            }
+        }
+
+        this.proyectoInversionService.aprobarProyecto(proyecto.id!, estado, comentario).subscribe({
+            next: (respuesta) => {
+                if (!respuesta.error) {
+                    const severity = accion === 'aprobar' ? 'success' : 'warn';
+                    const summary = accion === 'aprobar' ? 'Proyecto Aprobado' : 'Proyecto Rechazado';
+                    const detail = accion === 'aprobar'
+                        ? `El proyecto "${proyecto.titulo}" ha sido aprobado correctamente`
+                        : `El proyecto "${proyecto.titulo}" ha sido rechazado`;
+
+                    this.messageService.add({
+                        severity: severity,
+                        summary: summary,
+                        detail: detail
+                    });
+
+                    // Recargar los proyectos para actualizar el estado
+                    this.cargarProyectos();
+                } else {
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: respuesta.mensaje || 'No se pudo procesar la solicitud'
+                    });
+                }
+            },
+            error: (error) => {
+                console.error('Error al procesar la aprobación:', error);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'No se pudo procesar la solicitud de aprobación'
+                });
+            }
         });
     }
 }

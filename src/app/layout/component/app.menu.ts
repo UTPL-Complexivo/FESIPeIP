@@ -53,7 +53,10 @@ const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
         },
         {
             label: 'Reportes y  Visualización',
-            items: [{ label: 'Configuración Institucional', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/configuracion-institucional'] }]
+            items: [
+                { label: 'Configuración Institucional', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/configuracion-institucional'] },
+                { label: 'Objetivos Estratégicos', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/objetivos-estrategicos'] },
+            ]
         }
     ],
     revisor: [
@@ -71,6 +74,13 @@ const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
         {
             label: 'Proyectos de Inversión',
             items: [{ label: 'Proyectos', icon: 'pi pi-fw pi-tag', routerLink: ['/proyecto-inversion/proyecto'] }]
+        },
+        {
+            label: 'Reportes y  Visualización',
+            items: [
+                { label: 'Configuración Institucional', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/configuracion-institucional'] },
+                { label: 'Objetivos Estratégicos', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/objetivos-estrategicos'] },
+            ]
         }
     ],
     autoridad: [
@@ -88,6 +98,13 @@ const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
         {
             label: 'Proyectos de Inversión',
             items: [{ label: 'Proyectos', icon: 'pi pi-fw pi-tag', routerLink: ['/proyecto-inversion/proyecto'] }]
+        },
+        {
+            label: 'Reportes y  Visualización',
+            items: [
+                { label: 'Configuración Institucional', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/configuracion-institucional'] },
+                { label: 'Objetivos Estratégicos', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/objetivos-estrategicos'] },
+            ]
         }
     ],
     externo: [

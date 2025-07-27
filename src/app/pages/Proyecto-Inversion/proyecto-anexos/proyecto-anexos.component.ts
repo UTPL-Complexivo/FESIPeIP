@@ -4,8 +4,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MenuItem, MessageService, ConfirmationService } from 'primeng/api';
 import { AppCabeceraPrincipal } from '../../../layout/component/app.cabecera-principal';
 import { ProyectoInversionService } from '../../../service/proyecto-inversion.service';
+import { UsuarioService } from '../../../service/usuario.service';
 import { ProyectoInversionModel } from '../../../models/proyecto-inversion.model';
 import { AnexoProyectoModel } from '../../../models/anexo-proyecto.model';
+import { UsuarioModel } from '../../../models/usuario.model';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
@@ -45,12 +47,14 @@ import { ToolbarModule } from 'primeng/toolbar';
                             <p class="text-blue-700"><strong>CUP:</strong> {{ proyecto.cup }}</p>
                             <p class="text-blue-600 text-sm mt-1">{{ proyecto.descripcion }}</p>
                         </div>
-                        <button pButton
-                                label="Subir Anexo"
-                                icon="pi pi-upload"
-                                class="p-button-success"
-                                (click)="mostrarDialogoSubida()">
-                        </button>
+                        @if (esExterno()) {
+                            <button pButton
+                                    label="Subir Anexo"
+                                    icon="pi pi-upload"
+                                    class="p-button-success"
+                                    (click)="mostrarDialogoSubida()">
+                            </button>
+                        }
                     </div>
                 </div>
             }
@@ -85,14 +89,16 @@ import { ToolbarModule } from 'primeng/toolbar';
                                         pTooltip="Descargar"
                                         tooltipPosition="top">
                                 </button>
-                                <button pButton
-                                        icon="pi pi-trash"
-                                        size="small"
-                                        class="p-button-rounded p-button-danger p-button-text"
-                                        (click)="eliminarAnexo(anexo)"
-                                        pTooltip="Eliminar"
-                                        tooltipPosition="top">
-                                </button>
+                                @if (esExterno()) {
+                                    <button pButton
+                                            icon="pi pi-trash"
+                                            size="small"
+                                            class="p-button-rounded p-button-danger p-button-text"
+                                            (click)="eliminarAnexo(anexo)"
+                                            pTooltip="Eliminar"
+                                            tooltipPosition="top">
+                                    </button>
+                                }
                             </div>
                         </td>
                         <td>
@@ -113,12 +119,14 @@ import { ToolbarModule } from 'primeng/toolbar';
                             <div class="text-gray-500">
                                 <i class="pi pi-inbox text-4xl mb-2 block"></i>
                                 <p>No hay anexos cargados para este proyecto</p>
-                                <button pButton
-                                        label="Subir Primer Anexo"
-                                        icon="pi pi-upload"
-                                        class="p-button-outlined mt-2"
-                                        (click)="mostrarDialogoSubida()">
-                                </button>
+                                @if (esExterno()) {
+                                    <button pButton
+                                            label="Subir Primer Anexo"
+                                            icon="pi pi-upload"
+                                            class="p-button-outlined mt-2"
+                                            (click)="mostrarDialogoSubida()">
+                                    </button>
+                                }
                             </div>
                         </td>
                     </tr>
@@ -242,6 +250,7 @@ export class ProyectoAnexosComponent implements OnInit {
     proyecto: ProyectoInversionModel | null = null;
     anexos: AnexoProyectoModel[] = [];
     loading: boolean = true;
+    usuarioActual: UsuarioModel | null = null;
 
     // Dialog
     mostrarDialog: boolean = false;
@@ -257,6 +266,7 @@ export class ProyectoAnexosComponent implements OnInit {
         private router: Router,
         private fb: FormBuilder,
         private proyectoInversionService: ProyectoInversionService,
+        private usuarioService: UsuarioService,
         private messageService: MessageService,
         private confirmationService: ConfirmationService
     ) {
@@ -267,12 +277,37 @@ export class ProyectoAnexosComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        this.cargarUsuarioActual();
         this.route.params.subscribe(params => {
             this.proyectoId = +params['id'];
             if (this.proyectoId) {
                 this.cargarProyecto();
             }
         });
+    }
+
+    cargarUsuarioActual(): void {
+        this.usuarioService.getMe().subscribe({
+            next: (usuario) => {
+                this.usuarioActual = usuario;
+            },
+            error: (error) => {
+                console.error('Error al cargar usuario:', error);
+            }
+        });
+    }
+
+    // Métodos de verificación de roles
+    esExterno(): boolean {
+        return this.usuarioActual?.roles?.includes('Externo') || false;
+    }
+
+    esRevisor(): boolean {
+        return this.usuarioActual?.roles?.includes('Revisor') || false;
+    }
+
+    esAutoridadValidante(): boolean {
+        return this.usuarioActual?.roles?.includes('Autoridad') || false;
     }
 
     cargarProyecto(): void {
@@ -302,6 +337,15 @@ export class ProyectoAnexosComponent implements OnInit {
     }
 
     mostrarDialogoSubida(): void {
+        if (!this.esExterno()) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Acceso Denegado',
+                detail: 'Solo los usuarios externos pueden subir anexos'
+            });
+            return;
+        }
+        
         this.mostrarDialog = true;
         this.formAnexo.reset();
         this.archivoSeleccionado = null;
@@ -323,6 +367,15 @@ export class ProyectoAnexosComponent implements OnInit {
     }
 
     subirAnexo(): void {
+        if (!this.esExterno()) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Acceso Denegado',
+                detail: 'Solo los usuarios externos pueden subir anexos'
+            });
+            return;
+        }
+
         this.intentoEnvio = true;
 
         if (this.formAnexo.valid && this.archivoSeleccionado) {
@@ -390,6 +443,15 @@ export class ProyectoAnexosComponent implements OnInit {
     }
 
     eliminarAnexo(anexo: AnexoProyectoModel): void {
+        if (!this.esExterno()) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Acceso Denegado',
+                detail: 'Solo los usuarios externos pueden eliminar anexos'
+            });
+            return;
+        }
+
         this.confirmationService.confirm({
             message: `¿Está seguro de que desea eliminar el anexo "${anexo.nombre}"?`,
             header: 'Confirmar Eliminación',

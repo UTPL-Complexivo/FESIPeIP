@@ -9,6 +9,7 @@ import { AdminUsersWidget } from './adminuserswidget';
 import { ObjetivosChartComponent } from './objetivos-chart.component';
 import { AlineacionesChartComponent } from './alineaciones-chart.component';
 import { AlineacionesResumenComponent } from './alineaciones-resumen.component';
+import { AppEstadoOe } from '../../../layout/component/app.estado-oe';
 import { MacroSectorService } from '../../../service/macro-sector.service';
 import { SectorService } from '../../../service/sector.service';
 import { SubSectorService } from '../../../service/sub-sector.service';
@@ -20,9 +21,11 @@ import { TipologiaService } from '../../../service/tipologia.service';
 import { ActividadService } from '../../../service/actividad.service';
 import { TipologiaActividadService } from '../../../service/tipologia-actividad.service';
 import { AlineacionService } from '../../../service/alineacion.service';
+import { ProyectoInversionService } from '../../../service/proyecto-inversion.service';
 import { UsuarioService } from '../../../service/usuario.service';
 import { RolService } from '../../../service/rol.service';
 import { InstitucionModel } from '../../../models/institucion.model';
+import { ProyectoInversionModel } from '../../../models/proyecto-inversion.model';
 import { TipologiaModel } from '../../../models/tipologia.model';
 import { ActividadModel } from '../../../models/actividad.model';
 import { TipologiaActividadModel } from '../../../models/tipologia-actividad.model';
@@ -47,7 +50,7 @@ interface AlineacionPorEje {
 @Component({
     selector: 'app-dashboard-summary',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [CommonModule, StatsWidget, RecentSalesWidget, BestSellingWidget, RevenueStreamWidget, AdminUsersWidget, ObjetivosChartComponent, AlineacionesChartComponent, AlineacionesResumenComponent],
+    imports: [CommonModule, StatsWidget, RecentSalesWidget, BestSellingWidget, RevenueStreamWidget, AdminUsersWidget, ObjetivosChartComponent, AlineacionesChartComponent, AlineacionesResumenComponent, AppEstadoOe],
     template: `
         <!-- Estadísticas de Usuarios y Roles (solo administradores) -->
         @if (esAdministrador()) {
@@ -69,6 +72,11 @@ interface AlineacionPorEje {
             <!-- Estadísticas de Objetivos Estratégicos (planificadores, revisores y autoridad validante) -->
             @if (esPlanificador() || esRevisor() || esAutoridadValidante()) {
                 <app-stats-widget class="contents" [cards]="cardsObjetivos()" />
+            }
+
+            <!-- Estadísticas de Proyectos de Inversión (usuarios externos, revisores y autoridad) -->
+            @if (esExterno() || esRevisor() || esAutoridadValidante()) {
+                <app-stats-widget class="contents" [cards]="cardsProyectos()" />
             }
 
             <!-- Widgets adicionales (solo planificadores) -->
@@ -103,6 +111,81 @@ interface AlineacionPorEje {
                     <app-alineaciones-resumen [alineacionesPorEje]="alineacionesPorEje()" [loading]="loadingAlineaciones()" />
                 </div>
             }
+
+            <!-- Widget simplificado para usuarios externos, revisores y autoridad validante -->
+            @if (esExterno() || esRevisor() || esAutoridadValidante()) {
+                <div class="col-span-12">
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        <!-- Resumen de proyectos por estado -->
+                        <div class="bg-white dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                    <i class="pi pi-chart-pie mr-2 text-blue-500"></i>
+                                    Estado de Proyectos
+                                </h3>
+                            </div>
+                            @if (loadingProyectosInversion()) {
+                                <div class="flex justify-center items-center h-48">
+                                    <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
+                                </div>
+                            } @else {
+                                <div class="space-y-4">
+                                    @for (item of getEstadisticasProyectos(); track item.label) {
+                                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                            <div class="flex items-center">
+                                                <div class="w-3 h-3 rounded-full mr-3" [style.background-color]="item.color"></div>
+                                                <span class="font-medium text-gray-700 dark:text-gray-300">{{ item.label }}</span>
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="text-lg font-bold text-gray-900 dark:text-gray-100">{{ item.value }}</div>
+                                                <div class="text-sm text-gray-500">{{ item.percentage }}%</div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Lista de proyectos recientes -->
+                        <div class="bg-white dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                    <i class="pi pi-list mr-2 text-green-500"></i>
+                                    Proyectos Recientes
+                                </h3>
+                                <a href="/proyecto-inversion/proyecto" class="text-blue-500 hover:text-blue-600 text-sm font-medium">
+                                    Ver todos
+                                </a>
+                            </div>
+                            @if (loadingProyectosInversion()) {
+                                <div class="flex justify-center items-center h-48">
+                                    <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
+                                </div>
+                            } @else {
+                                <div class="space-y-3">
+                                    @for (proyecto of getProyectosRecientes(); track proyecto.id) {
+                                        <div class="flex items-start justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                            <div class="flex-1">
+                                                <h4 class="font-medium text-gray-900 dark:text-gray-100 truncate">{{ proyecto.titulo }}</h4>
+                                                <p class="text-sm text-gray-500 mt-1">CUP: {{ proyecto.cup }}</p>
+                                                <p class="text-xs text-gray-400 mt-1">{{ formatDate(proyecto.fechaCreacion) }}</p>
+                                            </div>
+                                            <div class="ml-3 flex-shrink-0">
+                                                <app-estado-oe [estado]="proyecto.estado"></app-estado-oe>
+                                            </div>
+                                        </div>
+                                    } @empty {
+                                        <div class="text-center py-8 text-gray-500">
+                                            <i class="pi pi-inbox text-4xl mb-2 block"></i>
+                                            <p>No hay proyectos registrados</p>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
         }
     `
 })
@@ -119,6 +202,7 @@ export class DashboardSummaryComponent implements OnInit {
     private actividadService = inject(ActividadService);
     private tipologiaActividadService = inject(TipologiaActividadService);
     private alineacionService = inject(AlineacionService);
+    private proyectoInversionService = inject(ProyectoInversionService);
     private usuarioService = inject(UsuarioService);
     private rolService = inject(RolService);
 
@@ -161,6 +245,11 @@ export class DashboardSummaryComponent implements OnInit {
     alineacionesPorEje = signal<AlineacionPorEje[]>([]);
     loadingAlineaciones = signal<boolean>(false);
 
+    // Signals para proyectos de inversión (solo para usuarios externos)
+    proyectosInversion = signal<ProyectoInversionModel[]>([]);
+    cardsProyectos = signal<StatCard[]>([]);
+    loadingProyectosInversion = signal<boolean>(false);
+
     // Computed para verificar roles específicos
     esAdministrador = computed(() => {
         const usuario = this.usuarioActual();
@@ -180,6 +269,11 @@ export class DashboardSummaryComponent implements OnInit {
     esAutoridadValidante = computed(() => {
         const usuario = this.usuarioActual();
         return usuario?.roles?.includes('Autoridad') || false;
+    });
+
+    esExterno = computed(() => {
+        const usuario = this.usuarioActual();
+        return usuario?.roles?.includes('Externo') || false;
     });
 
     ngOnInit(): void {
@@ -304,6 +398,48 @@ export class DashboardSummaryComponent implements OnInit {
                     icono: 'pi-compass',
                     colorIcono: 'text-pink-500',
                     colorFondo: 'bg-pink-100 dark:bg-pink-400/10',
+                    loading: true
+                }
+            ]);
+        }
+
+        // Cards de proyectos de inversión (solo para usuarios externos)
+        if (this.esExterno()) {
+            this.cardsProyectos.set([
+                {
+                    titulo: 'Total Proyectos',
+                    valor: 0,
+                    subtitulo: '',
+                    icono: 'pi-briefcase',
+                    colorIcono: 'text-blue-500',
+                    colorFondo: 'bg-blue-100 dark:bg-blue-400/10',
+                    loading: true
+                },
+                {
+                    titulo: 'En Revisión',
+                    valor: 0,
+                    subtitulo: '',
+                    icono: 'pi-clock',
+                    colorIcono: 'text-orange-500',
+                    colorFondo: 'bg-orange-100 dark:bg-orange-400/10',
+                    loading: true
+                },
+                {
+                    titulo: 'Activos',
+                    valor: 0,
+                    subtitulo: '',
+                    icono: 'pi-check-circle',
+                    colorIcono: 'text-green-500',
+                    colorFondo: 'bg-green-100 dark:bg-green-400/10',
+                    loading: true
+                },
+                {
+                    titulo: 'Rechazados',
+                    valor: 0,
+                    subtitulo: '',
+                    icono: 'pi-times-circle',
+                    colorIcono: 'text-red-500',
+                    colorFondo: 'bg-red-100 dark:bg-red-400/10',
                     loading: true
                 }
             ]);
@@ -562,13 +698,18 @@ export class DashboardSummaryComponent implements OnInit {
                     // Solo cargar datos de usuarios y roles para administradores
                     this.cargarEstadisticasUsuariosRoles();
                 } else if (usuario?.roles?.includes('Revisor')) {
-                    // Para revisores cargar objetivos y alineaciones
+                    // Para revisores cargar objetivos, alineaciones y proyectos de inversión
                     this.cargarEstadisticasObjetivos();
                     this.cargarDatosAlineaciones();
+                    this.cargarEstadisticasProyectosInversion();
                 } else if (usuario?.roles?.includes('Autoridad')) {
-                    // Para autoridad validante cargar objetivos pendientes de validación y alineaciones
+                    // Para autoridad validante cargar objetivos, alineaciones y proyectos de inversión
                     this.cargarEstadisticasObjetivos();
                     this.cargarDatosAlineaciones();
+                    this.cargarEstadisticasProyectosInversion();
+                } else if (usuario?.roles?.includes('Externo')) {
+                    // Para usuarios externos cargar proyectos de inversión
+                    this.cargarEstadisticasProyectosInversion();
                 } else {
                     // Para planificadores cargar datos completos del dashboard
                     this.cargarEstadisticasConfiguracion();
@@ -793,5 +934,153 @@ export class DashboardSummaryComponent implements OnInit {
             .sort((a, b) => a.eje.localeCompare(b.eje));
 
         this.alineacionesPorEje.set(alineacionesArray);
+    }
+
+    /**
+     * Carga las estadísticas de proyectos de inversión para usuarios externos
+     */
+    private cargarEstadisticasProyectosInversion(): void {
+        const usuario = this.usuarioActual();
+
+        // Verificar si es un rol que debe ver proyectos de inversión
+        if (!this.esExterno() && !this.esRevisor() && !this.esAutoridadValidante()) {
+            return;
+        }
+
+        this.loadingProyectosInversion.set(true);
+
+        // Para usuarios externos: usar filtro por usuario, para revisor/autoridad: ver todos
+        const serviceCall = (this.esExterno() && usuario?.id)
+            ? this.proyectoInversionService.getProyectosByUserId(usuario.id)
+            : this.proyectoInversionService.getAll();
+
+        serviceCall.subscribe({
+            next: (proyectos) => {
+                this.proyectosInversion.set(proyectos);
+
+                // Contar proyectos por estado
+                const total = proyectos.length;
+                const pendientesRevision = proyectos.filter(p => p.estado === EstadoObjetivosEstrategicos.PendienteRevision).length;
+                const pendientesAutoridad = proyectos.filter(p => p.estado === EstadoObjetivosEstrategicos.PendienteAutoridad).length;
+                const activos = proyectos.filter(p => p.estado === EstadoObjetivosEstrategicos.Activo).length;
+                const rechazados = proyectos.filter(p => p.estado === EstadoObjetivosEstrategicos.Rechazado).length;
+
+                this.cardsProyectos.set([
+                    {
+                        titulo: 'Total Proyectos',
+                        valor: total,
+                        subtitulo: `${total} proyectos registrados`,
+                        icono: 'pi-briefcase',
+                        colorIcono: 'text-blue-500',
+                        colorFondo: 'bg-blue-100 dark:bg-blue-400/10',
+                        loading: false
+                    },
+                    {
+                        titulo: 'En Revisión',
+                        valor: pendientesRevision + pendientesAutoridad,
+                        subtitulo: `${pendientesRevision} pendientes revisión, ${pendientesAutoridad} pendientes autoridad`,
+                        icono: 'pi-clock',
+                        colorIcono: 'text-orange-500',
+                        colorFondo: 'bg-orange-100 dark:bg-orange-400/10',
+                        loading: false
+                    },
+                    {
+                        titulo: 'Activos',
+                        valor: activos,
+                        subtitulo: `${activos} proyectos aprobados`,
+                        icono: 'pi-check-circle',
+                        colorIcono: 'text-green-500',
+                        colorFondo: 'bg-green-100 dark:bg-green-400/10',
+                        loading: false
+                    },
+                    {
+                        titulo: 'Rechazados',
+                        valor: rechazados,
+                        subtitulo: `${rechazados} proyectos rechazados`,
+                        icono: 'pi-times-circle',
+                        colorIcono: 'text-red-500',
+                        colorFondo: 'bg-red-100 dark:bg-red-400/10',
+                        loading: false
+                    }
+                ]);
+
+                this.loadingProyectosInversion.set(false);
+            },
+            error: (error) => {
+                console.error('Error al cargar proyectos de inversión:', error);
+                this.loadingProyectosInversion.set(false);
+
+                // En caso de error, mantener las cards con valores por defecto
+                this.cardsProyectos.update(cards => cards.map(card => ({
+                    ...card,
+                    loading: false
+                })));
+            }
+        });
+    }
+
+    /**
+     * Obtiene las estadísticas de proyectos para el gráfico
+     */
+    getEstadisticasProyectos() {
+        const proyectos = this.proyectosInversion();
+        const total = proyectos.length;
+
+        if (total === 0) {
+            return [
+                { label: 'Sin proyectos', value: 0, percentage: 0, color: '#6b7280' }
+            ];
+        }
+
+        const estadisticas = [
+            {
+                label: 'Pendientes Revisión',
+                value: proyectos.filter(p => p.estado === EstadoObjetivosEstrategicos.PendienteRevision).length,
+                color: '#3b82f6'
+            },
+            {
+                label: 'Pendientes Autoridad',
+                value: proyectos.filter(p => p.estado === EstadoObjetivosEstrategicos.PendienteAutoridad).length,
+                color: '#f59e0b'
+            },
+            {
+                label: 'Activos',
+                value: proyectos.filter(p => p.estado === EstadoObjetivosEstrategicos.Activo).length,
+                color: '#10b981'
+            },
+            {
+                label: 'Rechazados',
+                value: proyectos.filter(p => p.estado === EstadoObjetivosEstrategicos.Rechazado).length,
+                color: '#ef4444'
+            }
+        ];
+
+        return estadisticas.map(stat => ({
+            ...stat,
+            percentage: Math.round((stat.value / total) * 100)
+        })).filter(stat => stat.value > 0);
+    }
+
+    /**
+     * Obtiene los proyectos más recientes (últimos 5)
+     */
+    getProyectosRecientes() {
+        const proyectos = this.proyectosInversion();
+        return proyectos
+            .sort((a, b) => new Date(b.fechaCreacion).getTime() - new Date(a.fechaCreacion).getTime())
+            .slice(0, 5);
+    }
+
+    /**
+     * Formatea una fecha en formato español
+     */
+    formatDate(date: Date | string): string {
+        if (!date) return '';
+        const dateObj = typeof date === 'string' ? new Date(date) : date;
+        return dateObj.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
     }
 }

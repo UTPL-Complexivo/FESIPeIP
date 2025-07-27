@@ -6,4 +6,5 @@ export interface ProyectoInversionEstadoLogModel {
     usuarioId: string;
     nombreUsuario: string;
     fecha: Date;
+    motivo?: string;
 }

@@ -3,8 +3,8 @@ import { AuthRoleGuard } from '../../helpers/auth-role.guard';
 
 export default [
     { path: 'proyecto', loadComponent: () => import('./proyecto/proyecto.component').then((t) => t.ProyectoComponent), canActivate: [AuthRoleGuard], data: { expectedRoles: ['Revisor', 'Externo','Autoridad'] } },
-    { path: 'proyecto/nuevo', loadComponent: () => import('./proyecto/proyecto-nuevo.component').then((t) => t.ProyectoNuevoComponent), canActivate: [AuthRoleGuard], data: { expectedRoles: ['Revisor', 'Externo','Autoridad'] } },
-    { path: 'proyecto/editar/:id', loadComponent: () => import('./proyecto/proyecto-editar.component').then((t) => t.ProyectoEditarComponent), canActivate: [AuthRoleGuard], data: { expectedRoles: ['Revisor', 'Externo','Autoridad'] } },
+    { path: 'proyecto/nuevo', loadComponent: () => import('./proyecto/proyecto-nuevo.component').then((t) => t.ProyectoNuevoComponent), canActivate: [AuthRoleGuard], data: { expectedRoles: ['Externo'] } },
+    { path: 'proyecto/editar/:id', loadComponent: () => import('./proyecto/proyecto-editar.component').then((t) => t.ProyectoEditarComponent), canActivate: [AuthRoleGuard], data: { expectedRoles: ['Externo'] } },
     { path: 'proyecto/:id/anexos', loadComponent: () => import('./proyecto-anexos/proyecto-anexos.component').then((t) => t.ProyectoAnexosComponent), canActivate: [AuthRoleGuard], data: { expectedRoles: ['Revisor', 'Externo','Autoridad'] } },
     { path: 'tipologia', loadComponent: () => import('./tipologia/tipologia.component').then((t) => t.TipologiaComponent), canActivate: [AuthRoleGuard], data: { expectedRoles: ['Planificador'] } },
     { path: 'tipologia/nuevo', loadComponent: () => import('./tipologia/tipologia-nuevo.component').then((t) => t.TipologiaNuevoComponent), canActivate: [AuthRoleGuard], data: { expectedRoles: ['Planificador'] } },

@@ -16,6 +16,10 @@ export class ProyectoInversionService {
         return this.http.get<ProyectoInversionModel[]>(this.apiUrl);
     }
 
+    getProyectosByUserId(userId: string): Observable<ProyectoInversionModel[]> {
+        return this.http.get<ProyectoInversionModel[]>(`${this.apiUrl}/usuario/${userId}`);
+    }
+
     getById(id: number): Observable<ProyectoInversionModel> {
         return this.http.get<ProyectoInversionModel>(`${this.apiUrl}/${id}`);
     }
@@ -52,5 +56,18 @@ export class ProyectoInversionService {
 
     getEstados(proyectoId: number): Observable<ProyectoInversionEstadoLogModel[]> {
         return this.http.get<ProyectoInversionEstadoLogModel[]>(`${this.apiUrl}/${proyectoId}/estados`);
+    }
+
+    aprobarProyecto(id: number, estado: string, comentario?: string): Observable<RespuestaModel> {
+        const params = { estado: estado };
+        const body = comentario || '';
+        console.log("params",params);
+        console.log("body",body);
+        return this.http.post<RespuestaModel>(`${this.apiUrl}/${id}/aprobar`, `"${body}"`, {
+            params: params,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
     }
 }
