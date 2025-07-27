@@ -5,6 +5,7 @@ import { AppEstadoOe } from '../../../layout/component/app.estado-oe';
 import { MenuItem, MessageService, ConfirmationService } from 'primeng/api';
 import { Table, TableModule } from 'primeng/table';
 import { ProyectoInversionModel } from '../../../models/proyecto-inversion.model';
+import { ActividadModel } from '../../../models/actividad.model';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { RouterModule } from '@angular/router';
@@ -15,8 +16,10 @@ import { TooltipModule } from 'primeng/tooltip';
 import { EstadoObjetivosEstrategicos } from '../../../shared/enums/estado-objetivos-estrategicos.enum';
 import { TagModule } from 'primeng/tag';
 import { ProyectoInversionService } from '../../../service/proyecto-inversion.service';
+import { ProyectoInversionEstadoLogModel } from '../../../models/proyecto-inversion-estado-log.model';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
+import { TimelineModule } from 'primeng/timeline';
 
 @Component({
     selector: 'app-proyecto',
@@ -93,8 +96,8 @@ import { DialogModule } from 'primeng/dialog';
                             <div class="flex gap-2 justify-center">
                                 <button pButton icon="pi pi-eye" size="small"
                                         class="p-button-rounded p-button-info p-button-text"
-                                        [routerLink]="['/proyecto-inversion/proyecto/ver', proyecto.id]"
-                                        pTooltip="Ver detalles" tooltipPosition="top"></button>
+                                        (click)="mostrarEstados(proyecto)"
+                                        pTooltip="Ver estados del proyecto" tooltipPosition="top"></button>
                                 <button pButton icon="pi pi-pencil" size="small"
                                         class="p-button-rounded p-button-success p-button-text"
                                         [routerLink]="['/proyecto-inversion/proyecto/editar', proyecto.id]"
@@ -154,19 +157,17 @@ import { DialogModule } from 'primeng/dialog';
             [header]="'Actividades del Proyecto: ' + (proyectoSeleccionado?.titulo || '')"
             [(visible)]="mostrarDialogoActividades"
             [modal]="true"
-            [style]="{ width: '70vw' }"
+            [style]="{ width: '50vw', maxWidth: '800px' }"
             [draggable]="false"
             [resizable]="false">
 
             @if (actividadesProyecto.length > 0) {
                 <div class="grid">
                     @for (actividad of actividadesProyecto; track actividad.id) {
-                        <div class="col-12 md:col-6 lg:col-4 mb-4">
+                        <div class="col-12 md:col-6 mb-3">
                             <div class="p-3 border border-gray-300 rounded-lg bg-gray-50">
                                 <h4 class="font-semibold text-gray-800 mb-2">{{ actividad.nombre }}</h4>
-                                @if (actividad.descripcion) {
-                                    <p class="text-sm text-gray-600">{{ actividad.descripcion }}</p>
-                                }
+                                <p class="text-sm text-gray-600">Código: {{ actividad.codigo }}</p>
                             </div>
                         </div>
                     }
@@ -187,6 +188,61 @@ import { DialogModule } from 'primeng/dialog';
                 </button>
             </div>
         </p-dialog>
+
+        <!-- Dialog para mostrar estados del proyecto -->
+        <p-dialog
+            [header]="'Estados del Proyecto: ' + (proyectoSeleccionado?.titulo || '')"
+            [(visible)]="mostrarDialogoEstados"
+            [modal]="true"
+            [style]="{ width: '60vw', maxWidth: '900px' }"
+            [draggable]="false"
+            [resizable]="false">
+
+            @if (cargandoEstados) {
+                <div class="text-center py-8">
+                    <i class="pi pi-spin pi-spinner text-4xl text-blue-500 mb-4 block"></i>
+                    <p class="text-gray-500">Cargando historial de estados...</p>
+                </div>
+            } @else if (estadosProyecto.length > 0) {
+                <p-timeline [value]="estadosProyecto" align="alternate" styleClass="customized-timeline">
+                    <ng-template #content let-estado>
+                        <div class="p-4 border border-gray-300 rounded-lg bg-white shadow-sm">
+                            <div class="flex justify-between items-start mb-2">
+                                <h4 class="font-semibold text-lg text-gray-800">{{ estado.nombreEstado }}</h4>
+                                <span class="text-sm text-gray-500">{{ formatDateTime(estado.fecha) }}</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-2">
+                                <i class="pi pi-user mr-2"></i>
+                                <strong>Usuario:</strong> {{ estado.nombreUsuario }}
+                            </div>
+                            <div class="text-xs text-gray-400">
+                                <i class="pi pi-calendar mr-2"></i>
+                                ID: {{ estado.proyectoId }}
+                            </div>
+                        </div>
+                    </ng-template>
+                    <ng-template #marker let-estado>
+                        <div class="flex items-center justify-center w-8 h-8 rounded-full border-2 border-blue-500 bg-blue-100">
+                            <i class="pi pi-check text-blue-600 text-sm"></i>
+                        </div>
+                    </ng-template>
+                </p-timeline>
+            } @else {
+                <div class="text-center py-8">
+                    <i class="pi pi-info-circle text-4xl text-gray-400 mb-4 block"></i>
+                    <p class="text-gray-500">No hay historial de estados disponible para este proyecto</p>
+                </div>
+            }
+
+            <div class="flex justify-end mt-4">
+                <button pButton
+                        label="Cerrar"
+                        icon="pi pi-times"
+                        class="p-button-text"
+                        (click)="cerrarDialogoEstados()">
+                </button>
+            </div>
+        </p-dialog>
     `,
     imports: [
         CommonModule,
@@ -202,7 +258,8 @@ import { DialogModule } from 'primeng/dialog';
         AppEstadoOe,
         TagModule,
         ConfirmDialogModule,
-        DialogModule
+        DialogModule,
+        TimelineModule
     ],
     providers: [MessageService, ConfirmationService]
 })
@@ -221,7 +278,12 @@ export class ProyectoComponent implements OnInit {
     // Propiedades para el diálogo de actividades
     mostrarDialogoActividades: boolean = false;
     proyectoSeleccionado: ProyectoInversionModel | null = null;
-    actividadesProyecto: any[] = [];
+    actividadesProyecto: ActividadModel[] = [];
+
+    // Propiedades para el diálogo de estados
+    mostrarDialogoEstados: boolean = false;
+    estadosProyecto: ProyectoInversionEstadoLogModel[] = [];
+    cargandoEstados: boolean = false;
 
     // Hacer accesible el enum en el template
     EstadoObjetivosEstrategicos = EstadoObjetivosEstrategicos;
@@ -321,5 +383,46 @@ export class ProyectoComponent implements OnInit {
         this.mostrarDialogoActividades = false;
         this.proyectoSeleccionado = null;
         this.actividadesProyecto = [];
+    }
+
+    mostrarEstados(proyecto: ProyectoInversionModel) {
+        this.proyectoSeleccionado = proyecto;
+        this.cargandoEstados = true;
+        this.mostrarDialogoEstados = true;
+        
+        this.proyectoInversionService.getEstados(proyecto.id).subscribe({
+            next: (estados) => {
+                this.estadosProyecto = estados;
+                this.cargandoEstados = false;
+            },
+            error: (error) => {
+                console.error('Error al obtener estados del proyecto:', error);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Error al cargar el historial de estados'
+                });
+                this.estadosProyecto = [];
+                this.cargandoEstados = false;
+            }
+        });
+    }
+
+    cerrarDialogoEstados() {
+        this.mostrarDialogoEstados = false;
+        this.estadosProyecto = [];
+        this.proyectoSeleccionado = null;
+    }
+
+    formatDateTime(date: Date | string): string {
+        if (!date) return '';
+        const dateObj = typeof date === 'string' ? new Date(date) : date;
+        return dateObj.toLocaleString('es-ES', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     }
 }

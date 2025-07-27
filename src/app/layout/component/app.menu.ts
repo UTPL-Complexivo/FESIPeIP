@@ -67,6 +67,10 @@ const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
                 { label: 'Objetivos Institucionales', icon: 'pi pi-fw pi-bullseye', routerLink: ['/objetivo-estrategico/objetivo-institucional'] },
                 { label: 'Alineaciones', icon: 'pi pi-fw pi-book', routerLink: ['/objetivo-estrategico/alineacion'] }
             ]
+        },
+        {
+            label: 'Proyectos de Inversión',
+            items: [{ label: 'Proyectos', icon: 'pi pi-fw pi-tag', routerLink: ['/proyecto-inversion/proyecto'] }]
         }
     ],
     autoridad: [
@@ -80,6 +84,20 @@ const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
                 { label: 'Objetivos Institucionales', icon: 'pi pi-fw pi-bullseye', routerLink: ['/objetivo-estrategico/objetivo-institucional'] },
                 { label: 'Alineaciones', icon: 'pi pi-fw pi-book', routerLink: ['/objetivo-estrategico/alineacion'] }
             ]
+        },
+        {
+            label: 'Proyectos de Inversión',
+            items: [{ label: 'Proyectos', icon: 'pi pi-fw pi-tag', routerLink: ['/proyecto-inversion/proyecto'] }]
+        }
+    ],
+    externo: [
+        {
+            label: 'Home',
+            items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/'] }]
+        },
+        {
+            label: 'Proyectos de Inversión',
+            items: [{ label: 'Proyectos', icon: 'pi pi-fw pi-tag', routerLink: ['/proyecto-inversion/proyecto'] }]
         }
     ]
 };

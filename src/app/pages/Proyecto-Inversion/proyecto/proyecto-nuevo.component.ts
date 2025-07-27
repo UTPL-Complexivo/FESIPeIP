@@ -324,7 +324,6 @@ export class ProyectoNuevoComponent implements OnInit {
                     });
                     this.initializeUserForm();
                     this.anexosSeleccionados = [];
-                    this.grabando = false;
                 }
             },
             error: (error) => {

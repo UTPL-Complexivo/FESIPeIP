@@ -397,11 +397,23 @@ export class ProyectoAnexosComponent implements OnInit {
             acceptLabel: 'Sí, Eliminar',
             rejectLabel: 'Cancelar',
             accept: () => {
-                // TODO: Implementar eliminación de anexo
-                this.messageService.add({
-                    severity: 'info',
-                    summary: 'Información',
-                    detail: `Funcionalidad de eliminación pendiente para: ${anexo.nombre}`
+                this.proyectoInversionService.eliminarAnexo(anexo.id).subscribe({
+                    next: (respuesta) => {
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Éxito',
+                            detail: `Anexo "${anexo.nombre}" eliminado correctamente`
+                        });
+                        this.cargarProyecto(); // Recargar para mostrar los cambios
+                    },
+                    error: (error) => {
+                        console.error('Error al eliminar anexo:', error);
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Error',
+                            detail: `No se pudo eliminar el anexo "${anexo.nombre}"`
+                        });
+                    }
                 });
             }
         });

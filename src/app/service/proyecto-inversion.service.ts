@@ -3,6 +3,7 @@ import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
 import { ProyectoInversionModel } from '../models/proyecto-inversion.model';
 import { RespuestaModel } from '../models/respuesta.model';
+import { ProyectoInversionEstadoLogModel } from '../models/proyecto-inversion-estado-log.model';
 import { HttpClient } from '@angular/common/http';
 
 @Injectable({
@@ -43,5 +44,13 @@ export class ProyectoInversionService {
         return this.http.get(`${this.apiUrl}/anexos/${anexoId}/descargar`, {
             responseType: 'blob'
         });
+    }
+
+    eliminarAnexo(anexoId: number): Observable<RespuestaModel> {
+        return this.http.delete<RespuestaModel>(`${this.apiUrl}/anexos/${anexoId}`);
+    }
+
+    getEstados(proyectoId: number): Observable<ProyectoInversionEstadoLogModel[]> {
+        return this.http.get<ProyectoInversionEstadoLogModel[]>(`${this.apiUrl}/${proyectoId}/estados`);
     }
 }

@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { MenuItem, MessageService } from 'primeng/api';
+import { MenuItem, MessageService, ConfirmationService } from 'primeng/api';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { ButtonModule } from 'primeng/button';
 import { FloatLabelModule } from 'primeng/floatlabel';
@@ -14,6 +14,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { FileUploadModule } from 'primeng/fileupload';
 import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ProyectoInversionService } from '../../../service/proyecto-inversion.service';
 import { ActividadService } from '../../../service/actividad.service';
 import { ProyectoInversionModel } from '../../../models/proyecto-inversion.model';
@@ -274,9 +275,11 @@ import { AppToolbarCrud } from "../../../layout/component/app.toolbar-crud";
                     </div>
                 </form>
             </p-dialog>
+
+            <p-confirmDialog></p-confirmDialog>
         </div>`,
-    imports: [BreadcrumbModule, RouterModule, CommonModule, ReactiveFormsModule, FormsModule, ToolbarModule, ButtonModule, FloatLabelModule, MessageModule, InputTextModule, TextareaModule, MultiSelectModule, FileUploadModule, DialogModule, TooltipModule, AppDetallePrincipal, AppToolbarCrud],
-    providers: [MessageService]
+    imports: [BreadcrumbModule, RouterModule, CommonModule, ReactiveFormsModule, FormsModule, ToolbarModule, ButtonModule, FloatLabelModule, MessageModule, InputTextModule, TextareaModule, MultiSelectModule, FileUploadModule, DialogModule, TooltipModule, ConfirmDialogModule, AppDetallePrincipal, AppToolbarCrud],
+    providers: [MessageService, ConfirmationService]
 })
 export class ProyectoEditarComponent implements OnInit {
     items: MenuItem[] = [];
@@ -304,7 +307,8 @@ export class ProyectoEditarComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private proyectoInversionService: ProyectoInversionService,
         private actividadService: ActividadService,
-        private messageService: MessageService
+        private messageService: MessageService,
+        private confirmationService: ConfirmationService
     ) {}
 
     ngOnInit() {
@@ -454,20 +458,62 @@ export class ProyectoEditarComponent implements OnInit {
     }
 
     eliminarAnexoExistente(anexo: AnexoProyectoModel): void {
-        // TODO: Implementar eliminación de anexo existente
-        this.messageService.add({
-            severity: 'info',
-            summary: 'Información',
-            detail: `Funcionalidad de eliminación pendiente para: ${anexo.nombre}`
+        this.confirmationService.confirm({
+            message: `¿Está seguro de que desea eliminar el anexo "${anexo.nombre}"?`,
+            header: 'Confirmar Eliminación',
+            icon: 'pi pi-exclamation-triangle',
+            acceptLabel: 'Sí, Eliminar',
+            rejectLabel: 'Cancelar',
+            accept: () => {
+                this.proyectoInversionService.eliminarAnexo(anexo.id).subscribe({
+                    next: (respuesta) => {
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Éxito',
+                            detail: `Anexo "${anexo.nombre}" eliminado correctamente`
+                        });
+                        this.loadProyecto(); // Recargar para mostrar los cambios
+                    },
+                    error: (error) => {
+                        console.error('Error al eliminar anexo:', error);
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Error',
+                            detail: `No se pudo eliminar el anexo "${anexo.nombre}"`
+                        });
+                    }
+                });
+            }
         });
     }
 
     descargarAnexo(anexo: AnexoProyectoModel): void {
-        // TODO: Implementar descarga de anexo
-        this.messageService.add({
-            severity: 'info',
-            summary: 'Información',
-            detail: `Funcionalidad de descarga pendiente para: ${anexo.nombre}`
+        this.proyectoInversionService.descargarAnexo(anexo.id).subscribe({
+            next: (blob: Blob) => {
+                // Crear un enlace temporal para descargar el archivo
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = anexo.nombre || 'anexo';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Éxito',
+                    detail: `Anexo "${anexo.nombre}" descargado correctamente`
+                });
+            },
+            error: (error) => {
+                console.error('Error al descargar anexo:', error);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: `No se pudo descargar el anexo "${anexo.nombre}"`
+                });
+            }
         });
     }
 
