@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
 import { ProyectoInversionModel } from '../models/proyecto-inversion.model';
+import { RespuestaModel } from '../models/respuesta.model';
 import { HttpClient } from '@angular/common/http';
 
 @Injectable({
@@ -18,15 +19,15 @@ export class ProyectoInversionService {
         return this.http.get<ProyectoInversionModel>(`${this.apiUrl}/${id}`);
     }
 
-    add(proyecto: ProyectoInversionModel): Observable<ProyectoInversionModel> {
-        return this.http.post<ProyectoInversionModel>(this.apiUrl, proyecto);
+    add(proyecto: ProyectoInversionModel): Observable<RespuestaModel> {
+        return this.http.post<RespuestaModel>(this.apiUrl, proyecto);
     }
 
-    update(id: number, proyecto: ProyectoInversionModel): Observable<ProyectoInversionModel> {
-        return this.http.put<ProyectoInversionModel>(`${this.apiUrl}/${id}`, proyecto);
+    update(id: number, proyecto: ProyectoInversionModel): Observable<RespuestaModel> {
+        return this.http.put<RespuestaModel>(`${this.apiUrl}/${id}`, proyecto);
     }
-    delete(id: number): Observable<void> {
-        return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    delete(id: number): Observable<RespuestaModel> {
+        return this.http.delete<RespuestaModel>(`${this.apiUrl}/${id}`);
     }
 
     uploadAnexo(id: number, file: File, nombre: string, descripcion: string): Observable<any> {
@@ -36,5 +37,11 @@ export class ProyectoInversionService {
         formData.append('descripcion', descripcion);
 
         return this.http.post<any>(`${this.apiUrl}/${id}/anexos`, formData);
+    }
+
+    descargarAnexo(anexoId: number): Observable<Blob> {
+        return this.http.get(`${this.apiUrl}/anexos/${anexoId}/descargar`, {
+            responseType: 'blob'
+        });
     }
 }

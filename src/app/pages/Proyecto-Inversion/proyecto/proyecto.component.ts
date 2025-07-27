@@ -16,6 +16,7 @@ import { EstadoObjetivosEstrategicos } from '../../../shared/enums/estado-objeti
 import { TagModule } from 'primeng/tag';
 import { ProyectoInversionService } from '../../../service/proyecto-inversion.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DialogModule } from 'primeng/dialog';
 
 @Component({
     selector: 'app-proyecto',
@@ -100,7 +101,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
                                         pTooltip="Editar proyecto" tooltipPosition="top"></button>
                                 <button pButton icon="pi pi-list" size="small"
                                         class="p-button-rounded p-button-warning p-button-text"
-                                        [routerLink]="['/proyecto-inversion/proyecto', proyecto.id, 'actividades']"
+                                        (click)="mostrarActividades(proyecto)"
                                         pTooltip="Ver actividades" tooltipPosition="top"></button>
                                 <button pButton icon="pi pi-paperclip" size="small"
                                         class="p-button-rounded p-button-secondary p-button-text"
@@ -147,6 +148,45 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
         </div>
         <p-toast position="top-right"></p-toast>
         <p-confirmDialog></p-confirmDialog>
+
+        <!-- Dialog para mostrar actividades -->
+        <p-dialog
+            [header]="'Actividades del Proyecto: ' + (proyectoSeleccionado?.titulo || '')"
+            [(visible)]="mostrarDialogoActividades"
+            [modal]="true"
+            [style]="{ width: '70vw' }"
+            [draggable]="false"
+            [resizable]="false">
+
+            @if (actividadesProyecto.length > 0) {
+                <div class="grid">
+                    @for (actividad of actividadesProyecto; track actividad.id) {
+                        <div class="col-12 md:col-6 lg:col-4 mb-4">
+                            <div class="p-3 border border-gray-300 rounded-lg bg-gray-50">
+                                <h4 class="font-semibold text-gray-800 mb-2">{{ actividad.nombre }}</h4>
+                                @if (actividad.descripcion) {
+                                    <p class="text-sm text-gray-600">{{ actividad.descripcion }}</p>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            } @else {
+                <div class="text-center py-8">
+                    <i class="pi pi-inbox text-4xl text-gray-400 mb-4 block"></i>
+                    <p class="text-gray-500">Este proyecto no tiene actividades asociadas</p>
+                </div>
+            }
+
+            <div class="flex justify-end mt-4">
+                <button pButton
+                        label="Cerrar"
+                        icon="pi pi-times"
+                        class="p-button-text"
+                        (click)="cerrarDialogoActividades()">
+                </button>
+            </div>
+        </p-dialog>
     `,
     imports: [
         CommonModule,
@@ -161,7 +201,8 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
         TooltipModule,
         AppEstadoOe,
         TagModule,
-        ConfirmDialogModule
+        ConfirmDialogModule,
+        DialogModule
     ],
     providers: [MessageService, ConfirmationService]
 })
@@ -176,6 +217,11 @@ export class ProyectoComponent implements OnInit {
 
     proyectos: ProyectoInversionModel[] = [];
     loading: boolean = true;
+
+    // Propiedades para el diálogo de actividades
+    mostrarDialogoActividades: boolean = false;
+    proyectoSeleccionado: ProyectoInversionModel | null = null;
+    actividadesProyecto: any[] = [];
 
     // Hacer accesible el enum en el template
     EstadoObjetivosEstrategicos = EstadoObjetivosEstrategicos;
@@ -263,5 +309,17 @@ export class ProyectoComponent implements OnInit {
             month: '2-digit',
             year: 'numeric'
         });
+    }
+
+    mostrarActividades(proyecto: ProyectoInversionModel): void {
+        this.proyectoSeleccionado = proyecto;
+        this.actividadesProyecto = proyecto.actividades || [];
+        this.mostrarDialogoActividades = true;
+    }
+
+    cerrarDialogoActividades(): void {
+        this.mostrarDialogoActividades = false;
+        this.proyectoSeleccionado = null;
+        this.actividadesProyecto = [];
     }
 }

@@ -13,23 +13,32 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
+import { FloatLabelModule } from 'primeng/floatlabel';
+import { TextareaModule } from 'primeng/textarea';
 import { FileUploadModule } from 'primeng/fileupload';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AppDetallePrincipal } from "../../../layout/component/app.detalle-principal";
+import { ToolbarModule } from 'primeng/toolbar';
 
 @Component({
     selector: 'app-proyecto-anexos',
     standalone: true,
     template: `
         <div class="card">
-            <app-cabecera-principal
-                [items]="items"
-                [titulo]="'Anexos del Proyecto: ' + (proyecto?.titulo || '')"
-                linkNuevo="">
-            </app-cabecera-principal>
-
+            <app-detalle-principal [items]="items" [titulo]="'Anexos del Proyecto: ' + (proyecto?.titulo || '')"></app-detalle-principal>
+            <p-toolbar>
+                <ng-template #start>
+                     <button pButton
+                        label="Regresar al Listado"
+                        icon="pi pi-arrow-left"
+                        class="p-button-outlined"
+                        (click)="regresarAlListado()">
+                </button>
+                </ng-template>
+            </p-toolbar>
             <!-- Información del proyecto -->
             @if (proyecto) {
-                <div class="mb-4 p-4 bg-blue-50 border-l-4 border-blue-400">
+                <div class="mb-4 p-4 bg-blue-50 border-l-4 border-blue-400 mt-5 mb-5">
                     <div class="flex justify-between items-start">
                         <div>
                             <h3 class="text-lg font-semibold text-blue-900">{{ proyecto.titulo }}</h3>
@@ -127,31 +136,39 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
             [resizable]="false">
 
             <form [formGroup]="formAnexo" (ngSubmit)="subirAnexo()">
-                <div class="grid formgrid p-fluid">
-                    <div class="field col-12">
-                        <label for="nombre" class="font-medium">Nombre del Anexo *</label>
-                        <input pInputText
-                               id="nombre"
-                               formControlName="nombre"
-                               placeholder="Ingrese el nombre del anexo"
-                               [class.ng-invalid.ng-dirty]="formAnexo.get('nombre')?.invalid && formAnexo.get('nombre')?.touched" />
+                <div class="p-fluid">
+                    <!-- Nombre del Anexo -->
+                    <div class="p-field mb-6">
+                        <p-floatLabel>
+                            <input id="nombre"
+                                   type="text"
+                                   pInputText
+                                   formControlName="nombre"
+                                   class="w-full"
+                                   [class.ng-invalid.ng-dirty]="formAnexo.get('nombre')?.invalid && formAnexo.get('nombre')?.touched" />
+                            <label for="nombre">Nombre del Anexo *</label>
+                        </p-floatLabel>
                         @if (formAnexo.get('nombre')?.invalid && formAnexo.get('nombre')?.touched) {
                             <small class="p-error">El nombre es requerido</small>
                         }
                     </div>
 
-                    <div class="field col-12">
-                        <label for="descripcion" class="font-medium">Descripción</label>
-                        <textarea pInputText
-                                  id="descripcion"
-                                  formControlName="descripcion"
-                                  rows="3"
-                                  placeholder="Descripción opcional del anexo">
-                        </textarea>
+                    <!-- Descripción -->
+                    <div class="p-field mb-6">
+                        <p-floatLabel>
+                            <textarea id="descripcion"
+                                      pInputTextarea
+                                      formControlName="descripcion"
+                                      rows="3"
+                                      class="w-full">
+                            </textarea>
+                            <label for="descripcion">Descripción</label>
+                        </p-floatLabel>
                     </div>
 
-                    <div class="field col-12">
-                        <label class="font-medium">Archivo *</label>
+                    <!-- Archivo -->
+                    <div class="p-field mb-6">
+                        <label class="font-medium text-gray-700 mb-2 block">Archivo *</label>
                         <p-fileUpload
                             #fileUpload
                             mode="basic"
@@ -197,18 +214,21 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
         <p-confirmDialog></p-confirmDialog>
     `,
     imports: [
-        CommonModule,
-        AppCabeceraPrincipal,
-        TableModule,
-        ButtonModule,
-        TooltipModule,
-        ToastModule,
-        ConfirmDialogModule,
-        DialogModule,
-        InputTextModule,
-        FileUploadModule,
-        ReactiveFormsModule
-    ],
+    CommonModule,
+    TableModule,
+    ButtonModule,
+    TooltipModule,
+    ToastModule,
+    ConfirmDialogModule,
+    DialogModule,
+    InputTextModule,
+    FloatLabelModule,
+    TextareaModule,
+    FileUploadModule,
+    ReactiveFormsModule,
+    AppDetallePrincipal,
+    ToolbarModule
+],
     providers: [MessageService, ConfirmationService]
 })
 export class ProyectoAnexosComponent implements OnInit {
@@ -277,6 +297,10 @@ export class ProyectoAnexosComponent implements OnInit {
         });
     }
 
+    regresarAlListado(): void {
+        this.router.navigate(['/proyecto-inversion/proyecto']);
+    }
+
     mostrarDialogoSubida(): void {
         this.mostrarDialog = true;
         this.formAnexo.reset();
@@ -336,11 +360,32 @@ export class ProyectoAnexosComponent implements OnInit {
     }
 
     descargarAnexo(anexo: AnexoProyectoModel): void {
-        // TODO: Implementar descarga de anexo
-        this.messageService.add({
-            severity: 'info',
-            summary: 'Información',
-            detail: `Funcionalidad de descarga pendiente para: ${anexo.nombre}`
+        this.proyectoInversionService.descargarAnexo(anexo.id).subscribe({
+            next: (blob: Blob) => {
+                // Crear un enlace temporal para descargar el archivo
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = anexo.nombre || 'anexo';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Éxito',
+                    detail: `Anexo "${anexo.nombre}" descargado correctamente`
+                });
+            },
+            error: (error) => {
+                console.error('Error al descargar anexo:', error);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: `No se pudo descargar el anexo "${anexo.nombre}"`
+                });
+            }
         });
     }
 
