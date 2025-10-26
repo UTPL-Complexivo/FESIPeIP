@@ -56,6 +56,7 @@ const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
             items: [
                 { label: 'Configuración Institucional', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/configuracion-institucional'] },
                 { label: 'Objetivos Estratégicos', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/objetivos-estrategicos'] },
+                { label: 'Tipologías de Intervención', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/tipologias-intervencion'] },
             ]
         }
     ],

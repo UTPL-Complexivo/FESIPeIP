@@ -97,7 +97,7 @@ import { BadgeModule } from 'primeng/badge';
                 <ng-template #body let-rol>
                     <tr>
                         <td>
-                            <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text" [routerLink]="['/roles', rol.id]" pTooltip="Editar" tooltipPosition="top"></button>
+                            <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text" [routerLink]="['/gestion-usuarios/roles', rol.id]" pTooltip="Editar" tooltipPosition="top"></button>
                             @if (rol.estado === 'Activo') {
                                 <button pButton icon="pi pi-lock" class="p-button-rounded p-button-text" (click)="updateEstado(rol.id)" pTooltip="Inactivar" tooltipPosition="top"></button>
                             } @else {

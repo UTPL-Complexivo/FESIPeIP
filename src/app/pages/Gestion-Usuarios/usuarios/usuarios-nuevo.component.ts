@@ -258,7 +258,7 @@ export class UsuariosNuevoComponent implements OnInit {
             avatarUrl: ['', [Validators.pattern('https?://.+')]],
             userName: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
             tipoUsuario: ['Interno', [Validators.required]],
-            idEntidadEstado: [''],
+            idEntidadEstado: [null],
             roles: ['', [Validators.required]],
             estado: ['Activo'],
             eliminado: [false],
