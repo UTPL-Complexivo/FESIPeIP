@@ -84,6 +84,30 @@ import { AppDialogConfirmation } from '../../../layout/component/app.dialog-conf
                                 </div>
                             </div>
                         </th>
+                        <th pSortableColumn="fechaInicio" style="width: 10%">
+                            <div class="flex justify-between items-center w-full">
+                                <span>Fecha Inicio</span>
+                                <div class="flex items-center gap-2">
+                                    <p-sortIcon field="fechaInicio"></p-sortIcon>
+                                </div>
+                            </div>
+                        </th>
+                        <th pSortableColumn="fechaFin" style="width: 10%">
+                            <div class="flex justify-between items-center w-full">
+                                <span>Fecha Fin</span>
+                                <div class="flex items-center gap-2">
+                                    <p-sortIcon field="fechaFin"></p-sortIcon>
+                                </div>
+                            </div>
+                        </th>
+                        <th pSortableColumn="valorTotal" style="width: 10%">
+                            <div class="flex justify-between items-center w-full">
+                                <span>Valor Total</span>
+                                <div class="flex items-center gap-2">
+                                    <p-sortIcon field="valorTotal"></p-sortIcon>
+                                </div>
+                            </div>
+                        </th>
                         <th pSortableColumn="fechaCreacion" style="width: 5%">
                             <div class="flex justify-between items-center w-full">
                                 <span>Fecha Creación</span>
@@ -169,20 +193,29 @@ import { AppDialogConfirmation } from '../../../layout/component/app.dialog-conf
                             <app-estado-oe [estado]="proyecto.estado"></app-estado-oe>
                         </td>
                         <td>
+                            <span class="text-sm">{{ proyecto.fechaInicio ? formatDate(proyecto.fechaInicio) : '-' }}</span>
+                        </td>
+                        <td>
+                            <span class="text-sm">{{ proyecto.fechaFin ? formatDate(proyecto.fechaFin) : '-' }}</span>
+                        </td>
+                        <td>
+                            <span class="text-sm font-medium">{{ proyecto.valorTotal ? formatCurrency(proyecto.valorTotal) : '-' }}</span>
+                        </td>
+                        <td>
                             <span class="text-sm">{{ formatDate(proyecto.fechaCreacion) }}</span>
                         </td>
                     </tr>
                 </ng-template>
                 <ng-template #emptymessage>
                     <tr>
-                        <td colspan="6" class="text-center">
+                        <td colspan="9" class="text-center">
                             No se encontraron proyectos de inversión.
                         </td>
                     </tr>
                 </ng-template>
                 <ng-template #loadingbody>
                     <tr>
-                        <td colspan="6" class="text-center">
+                        <td colspan="9" class="text-center">
                             Cargando proyectos. Por favor espere.
                         </td>
                     </tr>
@@ -457,6 +490,16 @@ export class ProyectoComponent implements OnInit {
             month: '2-digit',
             year: 'numeric'
         });
+    }
+
+    formatCurrency(value: number): string {
+        if (!value && value !== 0) return '';
+        return new Intl.NumberFormat('es-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(value);
     }
 
     mostrarActividades(proyecto: ProyectoInversionModel): void {

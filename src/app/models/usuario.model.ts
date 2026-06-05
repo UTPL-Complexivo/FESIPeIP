@@ -12,4 +12,5 @@ export interface UsuarioModel {
     primerNombre: string;
     segundoNombre: string;
     idEntidadEstado: number;
+    nombreEntidadEstado: string;
 }

@@ -56,7 +56,7 @@ const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
             items: [
                 { label: 'Configuración Institucional', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/configuracion-institucional'] },
                 { label: 'Objetivos Estratégicos', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/objetivos-estrategicos'] },
-                { label: 'Tipologías de Intervención', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/tipologias-intervencion'] },
+                { label: 'Tipologías de Intervención', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/tipologias-intervencion'] }
             ]
         }
     ],
@@ -80,7 +80,7 @@ const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
             label: 'Reportes y  Visualización',
             items: [
                 { label: 'Configuración Institucional', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/configuracion-institucional'] },
-                { label: 'Objetivos Estratégicos', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/objetivos-estrategicos'] },
+                { label: 'Objetivos Estratégicos', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/objetivos-estrategicos'] }
             ]
         }
     ],
@@ -104,7 +104,7 @@ const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
             label: 'Reportes y  Visualización',
             items: [
                 { label: 'Configuración Institucional', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/configuracion-institucional'] },
-                { label: 'Objetivos Estratégicos', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/objetivos-estrategicos'] },
+                { label: 'Objetivos Estratégicos', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/objetivos-estrategicos'] }
             ]
         }
     ],
@@ -133,6 +133,9 @@ const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
             <p-skeleton styleClass="mb-2 mt-4" height="2rem" />
             <p-skeleton styleClass="mb-2 mt-4" height="2rem" />
         } @else {
+            @if (nombreEntidad) {
+                <div class="layout-menu-category mb-2 mt-4">{{ nombreEntidad }}</div>
+            }
             <ul class="layout-menu">
                 <ng-container *ngFor="let item of model; let i = index">
                     <li app-menuitem *ngIf="!item.separator" [item]="item" [index]="i" [root]="true"></li>
@@ -145,6 +148,7 @@ const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
 export class AppMenu {
     model: MenuItem[] = [];
     loading: boolean = true;
+    nombreEntidad: string = '';
     constructor(private userService: UsuarioService) {}
     ngOnInit() {
         this.getMenuItems();
@@ -158,6 +162,7 @@ export class AppMenu {
                     const rol = user.roles[0].toLowerCase();
                     this.model = ROLE_MENU_MAP[rol] ?? [];
                 }
+                this.nombreEntidad = user?.nombreEntidadEstado || '';
             },
             error: (error) => {
                 console.error('Error al obtener el usuario:', error);

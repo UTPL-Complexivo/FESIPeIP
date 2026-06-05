@@ -13,10 +13,12 @@ export class ProyectoInversionService {
     apiUrl: string = `${environment.apiUrl}/proyectoinversion`;
     constructor(private http: HttpClient) {}
     getAll(): Observable<ProyectoInversionModel[]> {
+        console.log("Fetching all projects");
         return this.http.get<ProyectoInversionModel[]>(this.apiUrl);
     }
 
     getProyectosByUserId(userId: string): Observable<ProyectoInversionModel[]> {
+        console.log("Fetching projects for user:", userId);
         return this.http.get<ProyectoInversionModel[]>(`${this.apiUrl}/usuario/${userId}`);
     }
 

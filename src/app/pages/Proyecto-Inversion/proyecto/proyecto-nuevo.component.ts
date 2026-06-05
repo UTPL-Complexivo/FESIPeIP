@@ -14,8 +14,11 @@ import { TextareaModule } from 'primeng/textarea';
 import { FileUploadModule } from 'primeng/fileupload';
 import { DialogModule } from 'primeng/dialog';
 import { TooltipModule } from 'primeng/tooltip';
+import { CalendarModule } from 'primeng/calendar';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { ProyectoInversionService } from '../../../service/proyecto-inversion.service';
 import { ActividadService } from '../../../service/actividad.service';
+import { UsuarioService } from '../../../service/usuario.service';
 import { ProyectoInversionModel } from '../../../models/proyecto-inversion.model';
 import { ActividadModel } from '../../../models/actividad.model';
 import { AnexoProyectoModel } from '../../../models/anexo-proyecto.model';
@@ -83,6 +86,63 @@ import { AppToolbarCrud } from "../../../layout/component/app.toolbar-crud";
                             <p-message severity="error" variant="simple" size="small" text="La descripción no puede exceder los 1000 caracteres." />
                         }
                     }
+                </div>
+
+                <!-- Periodo de Ejecución y Valor Total en Grid -->
+                <div class="grid">
+                    <!-- Periodo de Ejecución -->
+                    <div class="col-12 md:col-6">
+                        <div class="p-field mb-6">
+                            <p-floatLabel>
+                                <p-calendar
+                                    id="fechaEjecucion"
+                                    formControlName="fechaEjecucion"
+                                    selectionMode="range"
+                                    [showIcon]="true"
+                                    dateFormat="dd/mm/yy"
+                                    [readonlyInput]="true"
+                                    appendTo="body"
+                                    class="w-full">
+                                </p-calendar>
+                                <label for="fechaEjecucion">Periodo de Ejecución</label>
+                            </p-floatLabel>
+                            @if (proyectoForm.get('fechaEjecucion')?.invalid && proyectoForm.get('fechaEjecucion')?.touched) {
+                                @if (proyectoForm.get('fechaEjecucion')?.errors?.['required']) {
+                                    <p-message severity="error" variant="simple" size="small" text="El periodo de ejecución es requerido." />
+                                }
+                                @if (proyectoForm.get('fechaEjecucion')?.errors?.['invalidRange']) {
+                                    <p-message severity="error" variant="simple" size="small" text="Debe seleccionar fecha de inicio y fin." />
+                                }
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Valor Total del Proyecto -->
+                    <div class="col-12 md:col-6">
+                        <div class="p-field mb-6">
+                            <p-floatLabel>
+                                <p-inputNumber
+                                    id="valorTotal"
+                                    formControlName="valorTotal"
+                                    mode="currency"
+                                    currency="USD"
+                                    locale="en-US"
+                                    [minFractionDigits]="2"
+                                    [maxFractionDigits]="2"
+                                    class="w-1/4">
+                                </p-inputNumber>
+                                <label for="valorTotal">Valor Total del Proyecto (USD)</label>
+                            </p-floatLabel>
+                            @if (proyectoForm.get('valorTotal')?.invalid && proyectoForm.get('valorTotal')?.touched) {
+                                @if (proyectoForm.get('valorTotal')?.errors?.['required']) {
+                                    <p-message severity="error" variant="simple" size="small" text="El valor total es requerido." />
+                                }
+                                @if (proyectoForm.get('valorTotal')?.errors?.['min']) {
+                                    <p-message severity="error" variant="simple" size="small" text="El valor debe ser mayor a 0." />
+                                }
+                            }
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Actividades -->
@@ -231,7 +291,27 @@ import { AppToolbarCrud } from "../../../layout/component/app.toolbar-crud";
         </p-dialog>
     </div>
     `,
-    imports: [ReactiveFormsModule, FormsModule, BreadcrumbModule, CommonModule, RouterModule, MultiSelectModule, ToolbarModule, ButtonModule, InputTextModule, FloatLabelModule, MessageModule, TextareaModule, FileUploadModule, DialogModule, TooltipModule, AppDetallePrincipal, AppToolbarCrud],
+    imports: [
+        ReactiveFormsModule,
+        FormsModule,
+        BreadcrumbModule,
+        CommonModule,
+        RouterModule,
+        MultiSelectModule,
+        ToolbarModule,
+        ButtonModule,
+        InputTextModule,
+        FloatLabelModule,
+        MessageModule,
+        TextareaModule,
+        FileUploadModule,
+        DialogModule,
+        TooltipModule,
+        CalendarModule,
+        InputNumberModule,
+        AppDetallePrincipal,
+        AppToolbarCrud
+    ],
     providers: [MessageService]
 })
 export class ProyectoNuevoComponent implements OnInit {
@@ -254,6 +334,7 @@ export class ProyectoNuevoComponent implements OnInit {
         private fb: FormBuilder,
         private proyectoInversionService: ProyectoInversionService,
         private actividadService: ActividadService,
+        private usuarioService: UsuarioService,
         private messageService: MessageService
     ) {}
 
@@ -266,6 +347,20 @@ export class ProyectoNuevoComponent implements OnInit {
         ];
         this.initializeUserForm();
         this.cargarActividadesDisponibles();
+    }
+
+    /**
+     * Validador personalizado para verificar que se seleccionen ambas fechas en el rango
+     */
+    private rangeValidator(control: any) {
+        const value = control.value;
+        if (!value) {
+            return null;
+        }
+        if (Array.isArray(value) && value.length === 2 && value[0] && value[1]) {
+            return null;
+        }
+        return { invalidRange: true };
     }
 
     cargarActividadesDisponibles(): void {
@@ -285,6 +380,8 @@ export class ProyectoNuevoComponent implements OnInit {
             cup: ['', [Validators.required, Validators.minLength(5)]],
             titulo: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(200)]],
             descripcion: ['', [Validators.required, Validators.minLength(20), Validators.maxLength(1000)]],
+            fechaEjecucion: [null, [Validators.required, this.rangeValidator]],
+            valorTotal: [null, [Validators.required, Validators.min(0.01)]],
             actividades: [[], [Validators.required]]
         });
     }
@@ -297,11 +394,20 @@ export class ProyectoNuevoComponent implements OnInit {
         }
         this.grabando = true;
 
+        // Extraer las fechas del rango
+        const fechaEjecucion = this.proyectoForm.get('fechaEjecucion')?.value;
+        const fechaInicio = fechaEjecucion && fechaEjecucion[0] ? fechaEjecucion[0] : null;
+        const fechaFin = fechaEjecucion && fechaEjecucion[1] ? fechaEjecucion[1] : null;
+
         const proyecto: ProyectoInversionModel = {
-            id: 0, // Se asignará en el backend
+            id: 0,
+            idEntidadesEstado: this.usuarioService.getIdEntidadEstado() || 0,
             cup: this.proyectoForm.get('cup')?.value,
             titulo: this.proyectoForm.get('titulo')?.value,
             descripcion: this.proyectoForm.get('descripcion')?.value,
+            fechaInicio: fechaInicio,
+            fechaFin: fechaFin,
+            valorTotal: this.proyectoForm.get('valorTotal')?.value,
             estado: EstadoObjetivosEstrategicos.PendienteRevision, // Estado por defecto
             fechaCreacion: new Date(),
             fechaActualizacion: new Date(),

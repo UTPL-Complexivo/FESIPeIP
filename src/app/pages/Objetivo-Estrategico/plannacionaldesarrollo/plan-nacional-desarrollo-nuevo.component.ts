@@ -19,7 +19,7 @@ import { ActiveFilterPipe } from '../../../pipes/active-filter.pipe';
     standalone: true,
     template: `
         <div class="card">
-            <app-detalle-principal [items]="items" titulo="Nuevo Objetivo Institucional"></app-detalle-principal>
+            <app-detalle-principal [items]="items" titulo="Nuevo Plan Nacional de Desarrollo"></app-detalle-principal>
             <form [formGroup]="formPND" (ngSubmit)="onSubmit()">
                 <app-toolbar-crud [linkRegreso]="'/objetivo-estrategico/objetivo-pnd'" [grabando]="grabando" [initializeUserForm]="initializeUserForm.bind(this)"></app-toolbar-crud>
                 <div class="p-fluid">
