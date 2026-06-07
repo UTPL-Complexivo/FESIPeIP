@@ -15,8 +15,8 @@ import { DropdownModule } from 'primeng/dropdown';
 import { CalendarModule } from 'primeng/calendar';
 import { TagModule } from 'primeng/tag';
 import { CardModule } from 'primeng/card';
-import { AuditoriaService, AuditoriaFiltros } from '../../../service/auditoria.service';
-import { AuditEventModel } from '../../../models/audit-event.model';
+import { AuditoriaService, AuditoriaFiltros } from '../../service/auditoria.service';
+import { AuditEventModel } from '../../models/audit-event.model';
 
 interface SelectItem {
     label: string;
@@ -128,7 +128,7 @@ interface SelectItem {
                 [rows]="10"
                 [rowsPerPageOptions]="[10, 20, 50, 100]"
                 [responsiveLayout]="'scroll'"
-                [globalFilterFields]="['modulo', 'accion', 'entidad', 'usuario_id', 'detalles']"
+                [globalFilterFields]="['modulo', 'accion', 'entidad', 'usuarioId', 'detalles']"
             >
                 <ng-template #caption>
                     <div class="flex justify-between items-center flex-column sm:flex-row">
@@ -143,10 +143,10 @@ interface SelectItem {
                 </ng-template>
                 <ng-template #header>
                     <tr>
-                        <th pSortableColumn="fecha_hora" style="width: 14%">
+                        <th pSortableColumn="fechaHora" style="width: 14%">
                             <div class="flex justify-between items-center w-full">
                                 <span>Fecha / Hora</span>
-                                <p-sortIcon field="fecha_hora"></p-sortIcon>
+                                <p-sortIcon field="fechaHora"></p-sortIcon>
                             </div>
                         </th>
                         <th pSortableColumn="modulo" style="width: 12%">
@@ -176,12 +176,12 @@ interface SelectItem {
                                 </div>
                             </div>
                         </th>
-                        <th pSortableColumn="usuario_id" style="width: 18%">
+                        <th pSortableColumn="usuarioId" style="width: 18%">
                             <div class="flex justify-between items-center w-full">
                                 <span>Usuario ID</span>
                                 <div class="flex items-center gap-2">
-                                    <p-columnFilter type="text" field="usuario_id" display="menu" placeholder="Filtrar usuario"></p-columnFilter>
-                                    <p-sortIcon field="usuario_id"></p-sortIcon>
+                                    <p-columnFilter type="text" field="usuarioId" display="menu" placeholder="Filtrar usuario"></p-columnFilter>
+                                    <p-sortIcon field="usuarioId"></p-sortIcon>
                                 </div>
                             </div>
                         </th>
@@ -190,7 +190,7 @@ interface SelectItem {
                 </ng-template>
                 <ng-template #body let-log>
                     <tr>
-                        <td>{{ log.fecha_hora | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
+                        <td>{{ log.fechaHora | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
                         <td>
                             <p-tag [value]="log.modulo" severity="info"></p-tag>
                         </td>
@@ -198,7 +198,7 @@ interface SelectItem {
                         <td>
                             <p-tag [value]="log.accion" [severity]="getAccionSeverity(log.accion)"></p-tag>
                         </td>
-                        <td>{{ log.usuario_id || '-' }}</td>
+                        <td>{{ log.usuarioId || '-' }}</td>
                         <td>
                             <span class="text-xs font-mono break-all">{{ log.detalles }}</span>
                         </td>
@@ -256,19 +256,10 @@ export class AuditoriaComponent implements OnInit {
     };
 
     modulosOptions: SelectItem[] = [
-        { label: 'Usuarios', value: 'Usuarios' },
-        { label: 'Roles', value: 'Roles' },
-        { label: 'Instituciones', value: 'Instituciones' },
-        { label: 'Macro Sectores', value: 'MacroSectores' },
-        { label: 'Sectores', value: 'Sectores' },
-        { label: 'Subsectores', value: 'Subsectores' },
-        { label: 'Objetivo Institucional', value: 'ObjetivoInstitucional' },
-        { label: 'Objetivo PND', value: 'ObjetivoPND' },
-        { label: 'Objetivo DS', value: 'ObjetivoDS' },
-        { label: 'Alineaciones', value: 'Alineaciones' },
-        { label: 'Proyectos de Inversión', value: 'ProyectosInversion' },
-        { label: 'Tipologías', value: 'Tipologias' },
-        { label: 'Actividades', value: 'Actividades' }
+        { label: 'Configuracion Institucional', value: 'ConfigInst' },
+        { label: 'Objetivos Institucionales', value: 'ObjetivosInstitucionales' },
+        { label: 'Proyectos', value: 'GestorProyecto' },
+        { label: 'Seguridades', value: 'Usuarios' },
     ];
 
     entidadesOptions: SelectItem[] = [
@@ -328,6 +319,7 @@ export class AuditoriaComponent implements OnInit {
         this.buscado = true;
         this.auditoriaService.getLogs(this.filtros).subscribe({
             next: (data) => {
+                console.log('Logs recibidos:', data);
                 this.logs = data;
                 this.loading = false;
             },
