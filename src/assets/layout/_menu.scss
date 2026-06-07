@@ -17,6 +17,32 @@
     padding: 0.5rem 1.5rem;
 }
 
+.sidebar-user-card {
+    margin: 0.5rem 0 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--content-border-radius);
+    background: var(--surface-100);
+    border: 1px solid var(--surface-300);
+}
+
+.sidebar-user-name {
+    color: var(--text-color);
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.sidebar-user-role,
+.sidebar-user-email {
+    color: var(--text-color-secondary);
+    font-size: 0.85rem;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.sidebar-user-role {
+    margin-top: 0.15rem;
+}
+
 .layout-menu {
     margin: 0;
     padding: 0;
