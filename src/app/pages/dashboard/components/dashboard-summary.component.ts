@@ -186,6 +186,98 @@ interface AlineacionPorEje {
                     </div>
                 </div>
             }
+
+            <!-- Dashboard para rol de Auditoría -->
+            @if (esAuditoria()) {
+                <!-- Cards de resumen global -->
+                <app-stats-widget class="contents" [cards]="cardsAuditoria()" />
+
+                <!-- Gráficos de objetivos y alineaciones -->
+                <div class="col-span-12 xl:col-span-6">
+                    <app-objetivos-chart />
+                </div>
+                <div class="col-span-12 xl:col-span-6">
+                    <app-alineaciones-chart />
+                </div>
+
+                <!-- Resumen detallado de alineaciones por eje -->
+                <div class="col-span-12">
+                    <app-alineaciones-resumen [alineacionesPorEje]="alineacionesPorEje()" [loading]="loadingAlineaciones()" />
+                </div>
+
+                <!-- Proyectos de inversión -->
+                <div class="col-span-12">
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        <!-- Estado de proyectos -->
+                        <div class="bg-white dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                    <i class="pi pi-chart-pie mr-2 text-blue-500"></i>
+                                    Estado de Proyectos
+                                </h3>
+                            </div>
+                            @if (loadingProyectosInversion()) {
+                                <div class="flex justify-center items-center h-48">
+                                    <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
+                                </div>
+                            } @else {
+                                <div class="space-y-4">
+                                    @for (item of getEstadisticasProyectos(); track item.label) {
+                                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                            <div class="flex items-center">
+                                                <div class="w-3 h-3 rounded-full mr-3" [style.background-color]="item.color"></div>
+                                                <span class="font-medium text-gray-700 dark:text-gray-300">{{ item.label }}</span>
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="text-lg font-bold text-gray-900 dark:text-gray-100">{{ item.value }}</div>
+                                                <div class="text-sm text-gray-500">{{ item.percentage }}%</div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Proyectos recientes -->
+                        <div class="bg-white dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                    <i class="pi pi-list mr-2 text-green-500"></i>
+                                    Proyectos Recientes
+                                </h3>
+                                <a href="/proyecto-inversion/proyecto" class="text-blue-500 hover:text-blue-600 text-sm font-medium">
+                                    Ver todos
+                                </a>
+                            </div>
+                            @if (loadingProyectosInversion()) {
+                                <div class="flex justify-center items-center h-48">
+                                    <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
+                                </div>
+                            } @else {
+                                <div class="space-y-3">
+                                    @for (proyecto of getProyectosRecientes(); track proyecto.id) {
+                                        <div class="flex items-start justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                            <div class="flex-1">
+                                                <h4 class="font-medium text-gray-900 dark:text-gray-100 truncate">{{ proyecto.titulo }}</h4>
+                                                <p class="text-sm text-gray-500 mt-1">CUP: {{ proyecto.cup }}</p>
+                                                <p class="text-xs text-gray-400 mt-1">{{ formatDate(proyecto.fechaCreacion) }}</p>
+                                            </div>
+                                            <div class="ml-3 flex-shrink-0">
+                                                <app-estado-oe [estado]="proyecto.estado"></app-estado-oe>
+                                            </div>
+                                        </div>
+                                    } @empty {
+                                        <div class="text-center py-8 text-gray-500">
+                                            <i class="pi pi-inbox text-4xl mb-2 block"></i>
+                                            <p>No hay proyectos registrados</p>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
         }
     `
 })
@@ -250,6 +342,9 @@ export class DashboardSummaryComponent implements OnInit {
     cardsProyectos = signal<StatCard[]>([]);
     loadingProyectosInversion = signal<boolean>(false);
 
+    // Signals para dashboard de auditoría
+    cardsAuditoria = signal<StatCard[]>([]);
+
     // Computed para verificar roles específicos
     esAdministrador = computed(() => {
         const usuario = this.usuarioActual();
@@ -274,6 +369,11 @@ export class DashboardSummaryComponent implements OnInit {
     esExterno = computed(() => {
         const usuario = this.usuarioActual();
         return usuario?.roles?.includes('Externo') || false;
+    });
+
+    esAuditoria = computed(() => {
+        const usuario = this.usuarioActual();
+        return usuario?.roles?.includes('Auditoria') || false;
     });
 
     ngOnInit(): void {
@@ -440,6 +540,50 @@ export class DashboardSummaryComponent implements OnInit {
                     icono: 'pi-times-circle',
                     colorIcono: 'text-red-500',
                     colorFondo: 'bg-red-100 dark:bg-red-400/10',
+                    loading: true
+                }
+            ]);
+        }
+
+        // Cards para auditoría
+        if (this.esAuditoria()) {
+            this.loadingAlineaciones.set(true);
+            this.loadingProyectosInversion.set(true);
+            this.cardsAuditoria.set([
+                {
+                    titulo: 'Total Instituciones',
+                    valor: 0,
+                    subtitulo: '',
+                    icono: 'pi-building',
+                    colorIcono: 'text-blue-500',
+                    colorFondo: 'bg-blue-100 dark:bg-blue-400/10',
+                    loading: true
+                },
+                {
+                    titulo: 'Objetivos Institucionales',
+                    valor: 0,
+                    subtitulo: '',
+                    icono: 'pi-flag',
+                    colorIcono: 'text-green-500',
+                    colorFondo: 'bg-green-100 dark:bg-green-400/10',
+                    loading: true
+                },
+                {
+                    titulo: 'Total Alineaciones',
+                    valor: 0,
+                    subtitulo: '',
+                    icono: 'pi-compass',
+                    colorIcono: 'text-purple-500',
+                    colorFondo: 'bg-purple-100 dark:bg-purple-400/10',
+                    loading: true
+                },
+                {
+                    titulo: 'Proyectos de Inversión',
+                    valor: 0,
+                    subtitulo: '',
+                    icono: 'pi-briefcase',
+                    colorIcono: 'text-orange-500',
+                    colorFondo: 'bg-orange-100 dark:bg-orange-400/10',
                     loading: true
                 }
             ]);
@@ -671,6 +815,7 @@ export class DashboardSummaryComponent implements OnInit {
         this.cardsConfiguracion.set([]);
         this.cardsObjetivos.set([]);
         this.cardsUsuariosRoles.set([]);
+        this.cardsAuditoria.set([]);
         this.ultimasInstituciones.set([]);
         this.tipologias.set([]);
         this.actividades.set([]);
@@ -710,6 +855,9 @@ export class DashboardSummaryComponent implements OnInit {
                 } else if (usuario?.roles?.includes('Externo')) {
                     // Para usuarios externos cargar proyectos de inversión
                     this.cargarEstadisticasProyectosInversion();
+                } else if (usuario?.roles?.includes('Auditoria')) {
+                    // Para auditoría cargar todos los datos en una sola llamada
+                    this.cargarEstadisticasAuditoria();
                 } else {
                     // Para planificadores cargar datos completos del dashboard
                     this.cargarEstadisticasConfiguracion();
@@ -1015,6 +1163,84 @@ export class DashboardSummaryComponent implements OnInit {
                     ...card,
                     loading: false
                 })));
+            }
+        });
+    }
+
+    /**
+     * Carga todos los datos necesarios para el dashboard de auditoría
+     */
+    private cargarEstadisticasAuditoria(): void {
+        if (!this.esAuditoria()) {
+            return;
+        }
+
+        forkJoin({
+            instituciones: this.institucionService.getInstituciones(),
+            objetivosInstitucionales: this.objetivoInstitucionalService.getObjetivosInstitucionales(),
+            alineaciones: this.alineacionService.getAlineaciones(),
+            planesNacionalesDesarrollo: this.planNacionalDesarrolloService.getPlanesNacionalesDesarrollo(),
+            proyectos: this.proyectoInversionService.getAll()
+        }).subscribe({
+            next: (data) => {
+                // Poblar signals compartidas para los widgets de gráficos
+                this.alineaciones.set(data.alineaciones);
+                this.planesNacionalesDesarrollo.set(data.planesNacionalesDesarrollo);
+                this.proyectosInversion.set(data.proyectos);
+                this.procesarAlineacionesPorEje();
+
+                const institucionesActivas = data.instituciones.filter(i => i.estado === EstadoConfiguracionInstitucional.Activo).length;
+                const objetivosActivos = data.objetivosInstitucionales.filter(o => o.estado === EstadoObjetivosEstrategicos.Activo).length;
+                const alineacionesActivas = data.alineaciones.filter(a => a.estado === EstadoObjetivosEstrategicos.Activo).length;
+                const proyectosActivos = data.proyectos.filter(p => p.estado === EstadoObjetivosEstrategicos.Activo).length;
+
+                this.cardsAuditoria.set([
+                    {
+                        titulo: 'Total Instituciones',
+                        valor: data.instituciones.length,
+                        subtitulo: `${institucionesActivas} activas`,
+                        icono: 'pi-building',
+                        colorIcono: 'text-blue-500',
+                        colorFondo: 'bg-blue-100 dark:bg-blue-400/10',
+                        loading: false
+                    },
+                    {
+                        titulo: 'Objetivos Institucionales',
+                        valor: data.objetivosInstitucionales.length,
+                        subtitulo: `${objetivosActivos} activos`,
+                        icono: 'pi-flag',
+                        colorIcono: 'text-green-500',
+                        colorFondo: 'bg-green-100 dark:bg-green-400/10',
+                        loading: false
+                    },
+                    {
+                        titulo: 'Total Alineaciones',
+                        valor: data.alineaciones.length,
+                        subtitulo: `${alineacionesActivas} activas`,
+                        icono: 'pi-compass',
+                        colorIcono: 'text-purple-500',
+                        colorFondo: 'bg-purple-100 dark:bg-purple-400/10',
+                        loading: false
+                    },
+                    {
+                        titulo: 'Proyectos de Inversión',
+                        valor: data.proyectos.length,
+                        subtitulo: `${proyectosActivos} activos`,
+                        icono: 'pi-briefcase',
+                        colorIcono: 'text-orange-500',
+                        colorFondo: 'bg-orange-100 dark:bg-orange-400/10',
+                        loading: false
+                    }
+                ]);
+
+                this.loadingAlineaciones.set(false);
+                this.loadingProyectosInversion.set(false);
+            },
+            error: (error) => {
+                console.error('Error al cargar estadísticas de auditoría:', error);
+                this.cardsAuditoria.update(cards => cards.map(card => ({ ...card, loading: false })));
+                this.loadingAlineaciones.set(false);
+                this.loadingProyectosInversion.set(false);
             }
         });
     }

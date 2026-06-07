@@ -117,6 +117,42 @@ const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
             label: 'Proyectos de Inversión',
             items: [{ label: 'Proyectos', icon: 'pi pi-fw pi-tag', routerLink: ['/proyecto-inversion/proyecto'] }]
         }
+    ],
+    auditoria: [
+        {
+            label: 'Home',
+            items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/'] }]
+        },
+        {
+            label: 'Configuración Institucional',
+            items: [
+                { label: 'Macro Sectores', icon: 'pi pi-fw pi-building', routerLink: ['/configuracion-institucional/macro-sectores'] },
+                { label: 'Sectores', icon: 'pi pi-fw pi-book', routerLink: ['/configuracion-institucional/sectores'] },
+                { label: 'Subsectores', icon: 'pi pi-fw pi-briefcase', routerLink: ['/configuracion-institucional/sub-sectores'] },
+                { label: 'Instituciones', icon: 'pi pi-fw pi-building-columns', routerLink: ['/configuracion-institucional/instituciones'] }
+            ]
+        },
+        {
+            label: 'Objetivos Estratégicos',
+            items: [
+                { label: 'Objetivos Institucionales', icon: 'pi pi-fw pi-bullseye', routerLink: ['/objetivo-estrategico/objetivo-institucional'] },
+                { label: 'Objetivos PND', icon: 'pi pi-fw pi-bolt', routerLink: ['/objetivo-estrategico/objetivo-pnd'] },
+                { label: 'O. Desarrollo Sostenible', icon: 'pi pi-fw pi-chart-scatter', routerLink: ['/objetivo-estrategico/objetivo-ds'] },
+                { label: 'Alineaciones', icon: 'pi pi-fw pi-book', routerLink: ['/objetivo-estrategico/alineacion'] }
+            ]
+        },
+        {
+            label: 'Proyectos de Inversión',
+            items: [{ label: 'Proyectos', icon: 'pi pi-fw pi-tag', routerLink: ['/proyecto-inversion/proyecto'] }]
+        },
+        {
+            label: 'Reportes y Visualización',
+            items: [
+                { label: 'Configuración Institucional', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/configuracion-institucional'] },
+                { label: 'Objetivos Estratégicos', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/objetivos-estrategicos'] },
+                { label: 'Tipologías de Intervención', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/tipologias-intervencion'] }
+            ]
+        }
     ]
 };
 @Component({
