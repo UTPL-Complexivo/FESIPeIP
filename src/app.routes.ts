@@ -19,6 +19,7 @@ export const appRoutes: Routes = [
             { path: 'objetivo-estrategico', loadChildren: () => import('./app/pages/Objetivo-Estrategico/objetivo-estrategico.routes'), data: { expectedRoles: ['Planificador','Revisor', 'Autoridad'] }, canActivate: [AuthRoleGuard] },
             { path: 'proyecto-inversion', loadChildren: () => import('./app/pages/Proyecto-Inversion/proyecto-inversion.route'), data: { expectedRoles: ['Planificador','Revisor','Autoridad','Externo'] }, canActivate: [AuthRoleGuard] },
             { path: 'reportes', loadChildren: () => import('./app/pages/Reportes-Visualizacion/reportes-visualizacion.route'), data: { expectedRoles: ['Planificador', 'Administrador', 'Revisor', 'Externo'] }, canActivate: [AuthRoleGuard] },
+            { path: 'auditoria', loadChildren: () => import('./app/pages/Auditoria/auditoria.routes'), data: { expectedRoles: ['Auditor'] }, canActivate: [AuthRoleGuard] },
         ]
     },
     { path: 'notfound', component: Notfound },
