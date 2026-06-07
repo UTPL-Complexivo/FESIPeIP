@@ -166,6 +166,16 @@ const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
             label: 'Auditoría',
             items: [{ label: 'Logs de Auditoría', icon: 'pi pi-fw pi-list', routerLink: ['/auditoria/logs'] }]
         }
+    ],
+    auditoria: [
+        {
+            label: 'Home',
+            items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/'] }]
+        },
+        {
+            label: 'Auditoría',
+            items: [{ label: 'Logs de Auditoría', icon: 'pi pi-fw pi-list', routerLink: ['/auditoria/logs'] }]
+        }
     ]
 };
 @Component({
