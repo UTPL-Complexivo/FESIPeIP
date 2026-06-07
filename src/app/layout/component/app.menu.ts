@@ -18,6 +18,45 @@ const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
                 { label: 'Usuarios', icon: 'pi pi-fw pi-id-card', routerLink: ['/gestion-usuarios/usuarios'] },
                 { label: 'Roles', icon: 'pi pi-fw pi-check-square', routerLink: ['/gestion-usuarios/roles'] }
             ]
+        },
+        {
+            label: 'Configuración Institucional',
+            items: [
+                { label: 'Macro Sectores', icon: 'pi pi-fw pi-building', routerLink: ['/configuracion-institucional/macro-sectores'] },
+                { label: 'Sectores', icon: 'pi pi-fw pi-book', routerLink: ['/configuracion-institucional/sectores'] },
+                { label: 'Subsectores', icon: 'pi pi-fw pi-briefcase', routerLink: ['/configuracion-institucional/sub-sectores'] },
+                { label: 'Instituciones', icon: 'pi pi-fw pi-building-columns', routerLink: ['/configuracion-institucional/instituciones'] }
+            ]
+        },
+        {
+            label: 'Objetivos Estratégicos',
+            items: [
+                { label: 'Objetivos Institucionales', icon: 'pi pi-fw pi-bullseye', routerLink: ['/objetivo-estrategico/objetivo-institucional'] },
+                { label: 'Objetivos PND', icon: 'pi pi-fw pi-bolt', routerLink: ['/objetivo-estrategico/objetivo-pnd'] },
+                { label: 'O. Desarrollo Sostenible', icon: 'pi pi-fw pi-chart-scatter', routerLink: ['/objetivo-estrategico/objetivo-ds'] },
+                { label: 'Alineaciones', icon: 'pi pi-fw pi-book', routerLink: ['/objetivo-estrategico/alineacion'] }
+            ]
+        },
+        {
+            label: 'Proyectos de Inversión',
+            items: [
+                { label: 'Tipologías de intervencion', icon: 'pi pi-fw pi-tag', routerLink: ['/proyecto-inversion/tipologia'] },
+                { label: 'Actividades', icon: 'pi pi-fw pi-tag', routerLink: ['/proyecto-inversion/actividad'] },
+                { label: 'Tipologías - Actividades', icon: 'pi pi-fw pi-tags', routerLink: ['/proyecto-inversion/tipologia-actividad'] },
+                { label: 'Proyectos', icon: 'pi pi-fw pi-tag', routerLink: ['/proyecto-inversion/proyecto'] }
+            ]
+        },
+        {
+            label: 'Reportes y  Visualización',
+            items: [
+                { label: 'Configuración Institucional', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/configuracion-institucional'] },
+                { label: 'Objetivos Estratégicos', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/objetivos-estrategicos'] },
+                { label: 'Tipologías de Intervención', icon: 'pi pi-fw pi-file', routerLink: ['/reportes/tipologias-intervencion'] }
+            ]
+        },
+        {
+            label: 'Auditoría',
+            items: [{ label: 'Logs de Auditoría', icon: 'pi pi-fw pi-list', routerLink: ['/auditoria/logs'] }]
         }
     ],
     planificador: [
@@ -169,8 +208,9 @@ export class AppMenu {
             next: (user) => {
                 this.model = [];
                 if (user && user.roles && user.roles.length > 0) {
-                    const rol = user.roles[0].toLowerCase();
-                    this.model = ROLE_MENU_MAP[rol] ?? [];
+                    const normalizedRoles = user.roles.map((role) => role.toLowerCase().trim());
+                    const rolPrioritario = normalizedRoles.find((role) => ROLE_MENU_MAP[role]);
+                    this.model = rolPrioritario ? ROLE_MENU_MAP[rolPrioritario] : [];
                 }
                 this.nombreEntidad = user?.nombreEntidadEstado || '';
             },

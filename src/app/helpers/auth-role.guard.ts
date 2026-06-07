@@ -7,7 +7,7 @@ import { of } from 'rxjs';
 export const AuthRoleGuard: CanActivateFn = (route, state) => {
     const userService = inject(UsuarioService);
     const router = inject(Router);
-    const expectedRoles = route.data['expectedRoles'] as Array<string>;
+    const expectedRoles = (route.data['expectedRoles'] as Array<string> | undefined) ?? [];
 
     return userService.getMe().pipe(
         map((user) => {
@@ -16,7 +16,13 @@ export const AuthRoleGuard: CanActivateFn = (route, state) => {
                 return false;
             }
 
-            const hasRole = expectedRoles.some(role => user.roles.includes(role));
+            const userRoles = user.roles.map((role) => role.toLowerCase().trim());
+            if (userRoles.includes('administrador')) {
+                return true;
+            }
+
+            const normalizedExpectedRoles = expectedRoles.map((role) => role.toLowerCase().trim());
+            const hasRole = normalizedExpectedRoles.some((role) => userRoles.includes(role));
             if (!hasRole) {
                 router.navigate(['/auth/access']);
                 return false;
