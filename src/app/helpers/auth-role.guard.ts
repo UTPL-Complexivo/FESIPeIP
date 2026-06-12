@@ -4,6 +4,20 @@ import { UsuarioService } from '../service/usuario.service';
 import { map, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 
+const normalizeRole = (role: string): string => {
+    const normalized = role
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+
+    if (normalized === 'auditoria' || normalized === 'auditor') {
+        return 'auditor';
+    }
+
+    return normalized;
+};
+
 export const AuthRoleGuard: CanActivateFn = (route, state) => {
     const userService = inject(UsuarioService);
     const router = inject(Router);
@@ -16,12 +30,12 @@ export const AuthRoleGuard: CanActivateFn = (route, state) => {
                 return false;
             }
 
-            const userRoles = user.roles.map((role) => role.toLowerCase().trim());
+            const userRoles = user.roles.map((role) => normalizeRole(role));
             if (userRoles.includes('administrador')) {
                 return true;
             }
 
-            const normalizedExpectedRoles = expectedRoles.map((role) => role.toLowerCase().trim());
+            const normalizedExpectedRoles = expectedRoles.map((role) => normalizeRole(role));
             const hasRole = normalizedExpectedRoles.some((role) => userRoles.includes(role));
             if (!hasRole) {
                 router.navigate(['/auth/access']);

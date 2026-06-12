@@ -24,6 +24,7 @@ import { AlineacionService } from '../../../service/alineacion.service';
 import { ProyectoInversionService } from '../../../service/proyecto-inversion.service';
 import { UsuarioService } from '../../../service/usuario.service';
 import { RolService } from '../../../service/rol.service';
+import { AuditoriaService } from '../../../service/auditoria.service';
 import { InstitucionModel } from '../../../models/institucion.model';
 import { ProyectoInversionModel } from '../../../models/proyecto-inversion.model';
 import { TipologiaModel } from '../../../models/tipologia.model';
@@ -33,6 +34,7 @@ import { UsuarioModel } from '../../../models/usuario.model';
 import { RolModel } from '../../../models/rol.model';
 import { AlineacionModel } from '../../../models/alineacion.model';
 import { PlanNacionalDesarrolloModel } from '../../../models/plan-nacional-desarrollo.model';
+import { AuditEventModel } from '../../../models/audit-event.model';
 import { EstadoConfiguracionInstitucional } from '../../../shared/enums/estado-configuracion-institucional.enum';
 import { EstadoObjetivosEstrategicos } from '../../../shared/enums/estado-objetivos-estrategicos.enum';
 
@@ -192,84 +194,69 @@ interface AlineacionPorEje {
                 <!-- Cards de resumen global -->
                 <app-stats-widget class="contents" [cards]="cardsAuditoria()" />
 
-                <!-- Gráficos de objetivos y alineaciones -->
-                <div class="col-span-12 xl:col-span-6">
-                    <app-objetivos-chart />
-                </div>
-                <div class="col-span-12 xl:col-span-6">
-                    <app-alineaciones-chart />
-                </div>
-
-                <!-- Resumen detallado de alineaciones por eje -->
-                <div class="col-span-12">
-                    <app-alineaciones-resumen [alineacionesPorEje]="alineacionesPorEje()" [loading]="loadingAlineaciones()" />
-                </div>
-
-                <!-- Proyectos de inversión -->
                 <div class="col-span-12">
                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                        <!-- Estado de proyectos -->
+                        <!-- Actividad por módulo -->
                         <div class="bg-white dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                    <i class="pi pi-chart-pie mr-2 text-blue-500"></i>
-                                    Estado de Proyectos
+                                    <i class="pi pi-sitemap mr-2 text-blue-500"></i>
+                                    Actividad por Módulo
                                 </h3>
                             </div>
-                            @if (loadingProyectosInversion()) {
+                            @if (loadingAuditoriaLogs()) {
                                 <div class="flex justify-center items-center h-48">
                                     <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
                                 </div>
                             } @else {
                                 <div class="space-y-4">
-                                    @for (item of getEstadisticasProyectos(); track item.label) {
+                                    @for (item of getTopModulosAuditoria(); track item.modulo) {
                                         <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                                             <div class="flex items-center">
-                                                <div class="w-3 h-3 rounded-full mr-3" [style.background-color]="item.color"></div>
-                                                <span class="font-medium text-gray-700 dark:text-gray-300">{{ item.label }}</span>
+                                                <div class="w-3 h-3 rounded-full mr-3 bg-blue-500"></div>
+                                                <span class="font-medium text-gray-700 dark:text-gray-300">{{ item.modulo }}</span>
                                             </div>
                                             <div class="text-right">
-                                                <div class="text-lg font-bold text-gray-900 dark:text-gray-100">{{ item.value }}</div>
-                                                <div class="text-sm text-gray-500">{{ item.percentage }}%</div>
+                                                <div class="text-lg font-bold text-gray-900 dark:text-gray-100">{{ item.total }}</div>
+                                                <div class="text-sm text-gray-500">eventos</div>
                                             </div>
+                                        </div>
+                                    } @empty {
+                                        <div class="text-center py-8 text-gray-500">
+                                            <i class="pi pi-inbox text-4xl mb-2 block"></i>
+                                            <p>No hay actividad registrada</p>
                                         </div>
                                     }
                                 </div>
                             }
                         </div>
 
-                        <!-- Proyectos recientes -->
+                        <!-- Acciones más frecuentes -->
                         <div class="bg-white dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                    <i class="pi pi-list mr-2 text-green-500"></i>
-                                    Proyectos Recientes
+                                    <i class="pi pi-chart-bar mr-2 text-green-500"></i>
+                                    Acciones Más Frecuentes
                                 </h3>
-                                <a href="/proyecto-inversion/proyecto" class="text-blue-500 hover:text-blue-600 text-sm font-medium">
-                                    Ver todos
-                                </a>
                             </div>
-                            @if (loadingProyectosInversion()) {
+                            @if (loadingAuditoriaLogs()) {
                                 <div class="flex justify-center items-center h-48">
                                     <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
                                 </div>
                             } @else {
                                 <div class="space-y-3">
-                                    @for (proyecto of getProyectosRecientes(); track proyecto.id) {
-                                        <div class="flex items-start justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                    @for (accion of getTopAccionesAuditoria(); track accion.accion) {
+                                        <div class="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                                             <div class="flex-1">
-                                                <h4 class="font-medium text-gray-900 dark:text-gray-100 truncate">{{ proyecto.titulo }}</h4>
-                                                <p class="text-sm text-gray-500 mt-1">CUP: {{ proyecto.cup }}</p>
-                                                <p class="text-xs text-gray-400 mt-1">{{ formatDate(proyecto.fechaCreacion) }}</p>
+                                                <h4 class="font-medium text-gray-900 dark:text-gray-100 truncate">{{ accion.accion }}</h4>
+                                                <p class="text-sm text-gray-500 mt-1">Interacciones registradas</p>
                                             </div>
-                                            <div class="ml-3 flex-shrink-0">
-                                                <app-estado-oe [estado]="proyecto.estado"></app-estado-oe>
-                                            </div>
+                                            <div class="text-lg font-bold text-gray-900 dark:text-gray-100 ml-3">{{ accion.total }}</div>
                                         </div>
                                     } @empty {
                                         <div class="text-center py-8 text-gray-500">
                                             <i class="pi pi-inbox text-4xl mb-2 block"></i>
-                                            <p>No hay proyectos registrados</p>
+                                            <p>No hay acciones registradas</p>
                                         </div>
                                     }
                                 </div>
@@ -277,6 +264,40 @@ interface AlineacionPorEje {
                         </div>
                     </div>
                 </div>
+
+                <div class="col-span-12">
+                    <div class="bg-white dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                <i class="pi pi-history mr-2 text-indigo-500"></i>
+                                Eventos Recientes de Auditoría
+                            </h3>
+                        </div>
+                        @if (loadingAuditoriaLogs()) {
+                            <div class="flex justify-center items-center h-48">
+                                <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
+                            </div>
+                        } @else {
+                            <div class="space-y-3">
+                                @for (evento of getEventosRecientesAuditoria(); track evento._id) {
+                                    <div class="flex items-start justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                        <div class="flex-1">
+                                            <h4 class="font-medium text-gray-900 dark:text-gray-100 truncate">{{ evento.accion }} - {{ evento.entidad }}</h4>
+                                            <p class="text-sm text-gray-500 mt-1">Módulo: {{ evento.modulo }} | Usuario: {{ evento.usuario_id }}</p>
+                                            <p class="text-xs text-gray-400 mt-1">{{ formatDate(evento.fecha_hora) }}</p>
+                                        </div>
+                                        <div class="ml-3 flex-shrink-0 text-xs text-gray-500">{{ evento.entidad_id }}</div>
+                                    </div>
+                                } @empty {
+                                    <div class="text-center py-8 text-gray-500">
+                                        <i class="pi pi-inbox text-4xl mb-2 block"></i>
+                                        <p>No hay eventos de auditoría</p>
+                                            </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
             }
         }
     `
@@ -297,6 +318,7 @@ export class DashboardSummaryComponent implements OnInit {
     private proyectoInversionService = inject(ProyectoInversionService);
     private usuarioService = inject(UsuarioService);
     private rolService = inject(RolService);
+    private auditoriaService = inject(AuditoriaService);
 
     // Mapa de colores para ejes (replicando la lógica del pipe)
     private colorMap: { [key: string]: string } = {
@@ -344,36 +366,54 @@ export class DashboardSummaryComponent implements OnInit {
 
     // Signals para dashboard de auditoría
     cardsAuditoria = signal<StatCard[]>([]);
+    auditoriaLogs = signal<AuditEventModel[]>([]);
+    loadingAuditoriaLogs = signal<boolean>(false);
+
+    private readonly auditoriaModulos = ['ConfigInst', 'ObjetivosInstitucionales', 'GestorProyecto', 'Usuarios'];
+
+    private normalizeRole(role: string): string {
+        const normalized = role
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim();
+
+        if (normalized === 'auditoria' || normalized === 'auditor') {
+            return 'auditor';
+        }
+
+        return normalized;
+    }
+
+    private hasRole(role: string): boolean {
+        const roles = this.usuarioActual()?.roles ?? [];
+        const normalizedExpected = this.normalizeRole(role);
+        return roles.some((currentRole) => this.normalizeRole(currentRole) === normalizedExpected);
+    }
 
     // Computed para verificar roles específicos
     esAdministrador = computed(() => {
-        const usuario = this.usuarioActual();
-        return usuario?.roles?.includes('Administrador') || false;
+        return this.hasRole('Administrador');
     });
 
     esPlanificador = computed(() => {
-        const usuario = this.usuarioActual();
-        return usuario?.roles?.includes('Planificador') || false;
+        return this.hasRole('Planificador');
     });
 
     esRevisor = computed(() => {
-        const usuario = this.usuarioActual();
-        return usuario?.roles?.includes('Revisor') || false;
+        return this.hasRole('Revisor');
     });
 
     esAutoridadValidante = computed(() => {
-        const usuario = this.usuarioActual();
-        return usuario?.roles?.includes('Autoridad') || false;
+        return this.hasRole('Autoridad');
     });
 
     esExterno = computed(() => {
-        const usuario = this.usuarioActual();
-        return usuario?.roles?.includes('Externo') || false;
+        return this.hasRole('Externo');
     });
 
     esAuditoria = computed(() => {
-        const usuario = this.usuarioActual();
-        return usuario?.roles?.includes('Auditoria') || false;
+        return this.hasRole('Auditor');
     });
 
     ngOnInit(): void {
@@ -547,41 +587,40 @@ export class DashboardSummaryComponent implements OnInit {
 
         // Cards para auditoría
         if (this.esAuditoria()) {
-            this.loadingAlineaciones.set(true);
-            this.loadingProyectosInversion.set(true);
+            this.loadingAuditoriaLogs.set(true);
             this.cardsAuditoria.set([
                 {
-                    titulo: 'Total Instituciones',
+                    titulo: 'Eventos Registrados',
                     valor: 0,
                     subtitulo: '',
-                    icono: 'pi-building',
+                    icono: 'pi-database',
                     colorIcono: 'text-blue-500',
                     colorFondo: 'bg-blue-100 dark:bg-blue-400/10',
                     loading: true
                 },
                 {
-                    titulo: 'Objetivos Institucionales',
+                    titulo: 'Usuarios con Actividad',
                     valor: 0,
                     subtitulo: '',
-                    icono: 'pi-flag',
+                    icono: 'pi-users',
                     colorIcono: 'text-green-500',
                     colorFondo: 'bg-green-100 dark:bg-green-400/10',
                     loading: true
                 },
                 {
-                    titulo: 'Total Alineaciones',
+                    titulo: 'Entidades Impactadas',
                     valor: 0,
                     subtitulo: '',
-                    icono: 'pi-compass',
+                    icono: 'pi-sitemap',
                     colorIcono: 'text-purple-500',
                     colorFondo: 'bg-purple-100 dark:bg-purple-400/10',
                     loading: true
                 },
                 {
-                    titulo: 'Proyectos de Inversión',
+                    titulo: 'Acciones Críticas',
                     valor: 0,
                     subtitulo: '',
-                    icono: 'pi-briefcase',
+                    icono: 'pi-exclamation-triangle',
                     colorIcono: 'text-orange-500',
                     colorFondo: 'bg-orange-100 dark:bg-orange-400/10',
                     loading: true
@@ -820,6 +859,7 @@ export class DashboardSummaryComponent implements OnInit {
         this.tipologias.set([]);
         this.actividades.set([]);
         this.tipologiasActividades.set([]);
+        this.auditoriaLogs.set([]);
         this.usuarios.set([]);
         this.roles.set([]);
 
@@ -839,23 +879,23 @@ export class DashboardSummaryComponent implements OnInit {
                 this.inicializarSkeletons();
 
                 // Cargar datos específicos según el rol
-                if (usuario?.roles?.includes('Administrador')) {
+                if (this.esAdministrador()) {
                     // Solo cargar datos de usuarios y roles para administradores
                     this.cargarEstadisticasUsuariosRoles();
-                } else if (usuario?.roles?.includes('Revisor')) {
+                } else if (this.esRevisor()) {
                     // Para revisores cargar objetivos, alineaciones y proyectos de inversión
                     this.cargarEstadisticasObjetivos();
                     this.cargarDatosAlineaciones();
                     this.cargarEstadisticasProyectosInversion();
-                } else if (usuario?.roles?.includes('Autoridad')) {
+                } else if (this.esAutoridadValidante()) {
                     // Para autoridad validante cargar objetivos, alineaciones y proyectos de inversión
                     this.cargarEstadisticasObjetivos();
                     this.cargarDatosAlineaciones();
                     this.cargarEstadisticasProyectosInversion();
-                } else if (usuario?.roles?.includes('Externo')) {
+                } else if (this.esExterno()) {
                     // Para usuarios externos cargar proyectos de inversión
                     this.cargarEstadisticasProyectosInversion();
-                } else if (usuario?.roles?.includes('Auditoria')) {
+                } else if (this.esAuditoria()) {
                     // Para auditoría cargar todos los datos en una sola llamada
                     this.cargarEstadisticasAuditoria();
                 } else {
@@ -1175,74 +1215,105 @@ export class DashboardSummaryComponent implements OnInit {
             return;
         }
 
-        forkJoin({
-            instituciones: this.institucionService.getInstituciones(),
-            objetivosInstitucionales: this.objetivoInstitucionalService.getObjetivosInstitucionales(),
-            alineaciones: this.alineacionService.getAlineaciones(),
-            planesNacionalesDesarrollo: this.planNacionalDesarrolloService.getPlanesNacionalesDesarrollo(),
-            proyectos: this.proyectoInversionService.getAll()
-        }).subscribe({
-            next: (data) => {
-                // Poblar signals compartidas para los widgets de gráficos
-                this.alineaciones.set(data.alineaciones);
-                this.planesNacionalesDesarrollo.set(data.planesNacionalesDesarrollo);
-                this.proyectosInversion.set(data.proyectos);
-                this.procesarAlineacionesPorEje();
+        this.loadingAuditoriaLogs.set(true);
 
-                const institucionesActivas = data.instituciones.filter(i => i.estado === EstadoConfiguracionInstitucional.Activo).length;
-                const objetivosActivos = data.objetivosInstitucionales.filter(o => o.estado === EstadoObjetivosEstrategicos.Activo).length;
-                const alineacionesActivas = data.alineaciones.filter(a => a.estado === EstadoObjetivosEstrategicos.Activo).length;
-                const proyectosActivos = data.proyectos.filter(p => p.estado === EstadoObjetivosEstrategicos.Activo).length;
+        const requests = this.auditoriaModulos.map((modulo) =>
+            this.auditoriaService.getLogs({ modulo, limit: 200 })
+        );
+
+        forkJoin(requests).subscribe({
+            next: (logsPorModulo) => {
+                const logs = logsPorModulo
+                    .flat()
+                    .sort((a, b) => new Date(b.fecha_hora).getTime() - new Date(a.fecha_hora).getTime());
+
+                const totalEventos = logs.length;
+                const usuariosUnicos = new Set(logs.map((log) => log.usuario_id)).size;
+                const entidadesUnicas = new Set(logs.map((log) => log.entidad)).size;
+                const accionesCriticas = logs.filter((log) => {
+                    const accion = (log.accion || '').toLowerCase();
+                    return accion.includes('eliminar') || accion.includes('rechazar');
+                }).length;
+
+                this.auditoriaLogs.set(logs);
 
                 this.cardsAuditoria.set([
                     {
-                        titulo: 'Total Instituciones',
-                        valor: data.instituciones.length,
-                        subtitulo: `${institucionesActivas} activas`,
-                        icono: 'pi-building',
+                        titulo: 'Eventos Registrados',
+                        valor: totalEventos,
+                        subtitulo: `${this.auditoriaModulos.length} módulos auditados`,
+                        icono: 'pi-database',
                         colorIcono: 'text-blue-500',
                         colorFondo: 'bg-blue-100 dark:bg-blue-400/10',
                         loading: false
                     },
                     {
-                        titulo: 'Objetivos Institucionales',
-                        valor: data.objetivosInstitucionales.length,
-                        subtitulo: `${objetivosActivos} activos`,
-                        icono: 'pi-flag',
+                        titulo: 'Usuarios con Actividad',
+                        valor: usuariosUnicos,
+                        subtitulo: 'Usuarios distintos en el periodo',
+                        icono: 'pi-users',
                         colorIcono: 'text-green-500',
                         colorFondo: 'bg-green-100 dark:bg-green-400/10',
                         loading: false
                     },
                     {
-                        titulo: 'Total Alineaciones',
-                        valor: data.alineaciones.length,
-                        subtitulo: `${alineacionesActivas} activas`,
-                        icono: 'pi-compass',
+                        titulo: 'Entidades Impactadas',
+                        valor: entidadesUnicas,
+                        subtitulo: 'Tipos de entidad auditados',
+                        icono: 'pi-sitemap',
                         colorIcono: 'text-purple-500',
                         colorFondo: 'bg-purple-100 dark:bg-purple-400/10',
                         loading: false
                     },
                     {
-                        titulo: 'Proyectos de Inversión',
-                        valor: data.proyectos.length,
-                        subtitulo: `${proyectosActivos} activos`,
-                        icono: 'pi-briefcase',
+                        titulo: 'Acciones Críticas',
+                        valor: accionesCriticas,
+                        subtitulo: 'Eliminar/Rechazar detectadas',
+                        icono: 'pi-exclamation-triangle',
                         colorIcono: 'text-orange-500',
                         colorFondo: 'bg-orange-100 dark:bg-orange-400/10',
                         loading: false
                     }
                 ]);
 
-                this.loadingAlineaciones.set(false);
-                this.loadingProyectosInversion.set(false);
+                this.loadingAuditoriaLogs.set(false);
             },
             error: (error) => {
                 console.error('Error al cargar estadísticas de auditoría:', error);
                 this.cardsAuditoria.update(cards => cards.map(card => ({ ...card, loading: false })));
-                this.loadingAlineaciones.set(false);
-                this.loadingProyectosInversion.set(false);
+                this.loadingAuditoriaLogs.set(false);
             }
         });
+    }
+
+    getTopModulosAuditoria(): { modulo: string; total: number }[] {
+        const acumulado = new Map<string, number>();
+
+        for (const log of this.auditoriaLogs()) {
+            acumulado.set(log.modulo, (acumulado.get(log.modulo) ?? 0) + 1);
+        }
+
+        return Array.from(acumulado.entries())
+            .map(([modulo, total]) => ({ modulo, total }))
+            .sort((a, b) => b.total - a.total)
+            .slice(0, 6);
+    }
+
+    getTopAccionesAuditoria(): { accion: string; total: number }[] {
+        const acumulado = new Map<string, number>();
+
+        for (const log of this.auditoriaLogs()) {
+            acumulado.set(log.accion, (acumulado.get(log.accion) ?? 0) + 1);
+        }
+
+        return Array.from(acumulado.entries())
+            .map(([accion, total]) => ({ accion, total }))
+            .sort((a, b) => b.total - a.total)
+            .slice(0, 8);
+    }
+
+    getEventosRecientesAuditoria(): AuditEventModel[] {
+        return this.auditoriaLogs().slice(0, 10);
     }
 
     /**

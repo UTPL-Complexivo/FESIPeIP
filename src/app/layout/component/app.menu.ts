@@ -6,6 +6,20 @@ import { AppMenuitem } from './app.menuitem';
 import { UsuarioService } from '../../service/usuario.service';
 import { SkeletonModule } from 'primeng/skeleton';
 
+const normalizeRole = (role: string): string => {
+    const normalized = role
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+
+    if (normalized === 'auditoria' || normalized === 'auditor') {
+        return 'auditor';
+    }
+
+    return normalized;
+};
+
 const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
     administrador: [
         {
@@ -166,16 +180,6 @@ const ROLE_MENU_MAP: Record<string, MenuItem[]> = {
             label: 'Auditoría',
             items: [{ label: 'Logs de Auditoría', icon: 'pi pi-fw pi-list', routerLink: ['/auditoria/logs'] }]
         }
-    ],
-    auditoria: [
-        {
-            label: 'Home',
-            items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/'] }]
-        },
-        {
-            label: 'Auditoría',
-            items: [{ label: 'Logs de Auditoría', icon: 'pi pi-fw pi-list', routerLink: ['/auditoria/logs'] }]
-        }
     ]
 };
 @Component({
@@ -218,7 +222,7 @@ export class AppMenu {
             next: (user) => {
                 this.model = [];
                 if (user && user.roles && user.roles.length > 0) {
-                    const normalizedRoles = user.roles.map((role) => role.toLowerCase().trim());
+                    const normalizedRoles = user.roles.map((role) => normalizeRole(role));
                     const rolPrioritario = normalizedRoles.find((role) => ROLE_MENU_MAP[role]);
                     this.model = rolPrioritario ? ROLE_MENU_MAP[rolPrioritario] : [];
                 }
